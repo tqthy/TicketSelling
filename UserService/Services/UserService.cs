@@ -45,10 +45,10 @@ public class UserService : IUserService
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             return new AuthResponseDto { IsSuccess = false, Message = $"User registration failed: {errors}" };
         }
+        
 
-        // Optional: Add user to a default role here if needed
-        // await _userManager.AddToRoleAsync(newUser, "User");
-
+        await _userManager.AddToRoleAsync(newUser, registerDto.Role.ToString()); // Add user to role
+        
         return new AuthResponseDto { IsSuccess = true, Message = "User registered successfully." };
     }
 
@@ -75,19 +75,18 @@ public class UserService : IUserService
 
         // Define token expiration (e.g., 1 hour)
         var tokenExpiry = DateTime.UtcNow.AddHours(1);
-
+        
         // Prepare claims for the token payload
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id), // Subject (usually user ID)
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique token identifier
-            // Add custom claims (like roles) here if needed
-            // Example: Add roles
-            // var roles = await _userManager.GetRolesAsync(user);
-            // claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
         };
-
+        
+        var roles = await _userManager.GetRolesAsync(user);
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        
         // Create the security token descriptor
         var tokenDescriptor = new SecurityTokenDescriptor
         {

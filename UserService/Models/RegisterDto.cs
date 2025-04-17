@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UserService.Data.Enum;
 
 namespace UserService.Models;
 
@@ -14,4 +15,8 @@ public class RegisterDto
     [Required]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
+    
+    [Required]
+    [EnumDataType(typeof(UserRole))]
+    public UserRole Role { get; set; } = UserRole.User; 
 }
