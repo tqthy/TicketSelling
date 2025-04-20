@@ -67,7 +67,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Echo Image Tag
-        run: echo "Built image tag: ${{ steps.meta.outputs.version }}"
+        run: echo "Built image tag"
 
   #-------------------------------------
   # CD Job: Deploy to Swarm on EC2
