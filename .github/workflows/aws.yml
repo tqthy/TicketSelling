@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: hub.docker.com # Or docker.io, etc.
-  IMAGE_NAME: tqt0304/UserService
+  IMAGE_NAME: tqt0304/userservice
   # Name of your stack defined when running 'docker stack deploy'
   SWARM_STACK_NAME: my-prod-stack
   # Path to your compose file ON THE SWARM MANAGER NODE
@@ -47,7 +47,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             # Use commit SHA for unique tagging (recommended)
             type=sha,prefix=sha-
