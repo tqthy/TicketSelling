@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: hub.docker.com # Or docker.io, etc.
-  IMAGE_NAME: tqt0304/TicketSelling
+  IMAGE_NAME: tqt0304/UserService
   # Name of your stack defined when running 'docker stack deploy'
   SWARM_STACK_NAME: my-prod-stack
   # Path to your compose file ON THE SWARM MANAGER NODE
@@ -54,11 +54,11 @@ jobs:
             # Optionally, tag 'latest' on pushes to main branch
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (UserService)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./UserService/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
