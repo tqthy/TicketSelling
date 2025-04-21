@@ -139,7 +139,7 @@ jobs:
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
 
             echo "--- Logging into Docker Registry on Swarm Manager ---"
-            echo "${REGISTRY_PASSWORD}" | docker login ${{ env.REGISTRY }} -u "${REGISTRY_USER}" --password-stdin
+            echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
 
             echo "--- Managing Docker Secrets for RDS Credentials ---"
             echo "${RDS_PASSWORD}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_password - || echo "${RDS_PASSWORD}" | docker secret update rds_db_password -
