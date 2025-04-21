@@ -9,13 +9,14 @@ using UserService.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
 if (string.IsNullOrEmpty(connectionString))
 {
-    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    throw new InvalidOperationException("Connection string 'UserServiceDb' not found.");
 }
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
 
 // Identity configuration
 // Configure Identity
@@ -56,6 +57,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserService, UserService.Services.UserService>(); 
 
+builder.Configuration.AddKeyPerFile(directoryPath: "/run/secrets", optional: true, reloadOnChange: true);
 
 var app = builder.Build();
 
