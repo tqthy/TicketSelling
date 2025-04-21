@@ -119,7 +119,7 @@ jobs:
           host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
           username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          envs: RDS_PASSWORD,RDS_USER,RDS_HOST,RDS_PORT,RDS_DB_NAME
+          envs: RDS_PASSWORD,RDS_USER,RDS_HOST,RDS_PORT,RDS_DB_NAME,REGISTRY_PASSWORD,REGISTRY_USER
           script: |
             set -e # Exit script on first error
 
