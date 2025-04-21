@@ -14,7 +14,7 @@ env:
   # Name of your stack defined when running 'docker stack deploy'
   SWARM_STACK_NAME: my-prod-stack
   # Path to your compose file ON THE SWARM MANAGER NODE
-  COMPOSE_FILE_PATH_ON_MANAGER: /home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/docker-compose.prod.yml
+  COMPOSE_FILE_PATH_ON_MANAGER: /home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/scripts/docker-compose.prod.yml
 
 jobs:
   #-------------------------
