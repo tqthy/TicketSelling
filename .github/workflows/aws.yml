@@ -14,7 +14,7 @@ env:
   # Name of your stack defined when running 'docker stack deploy'
   SWARM_STACK_NAME: my-prod-stack
   # Path to your compose file ON THE SWARM MANAGER NODE
-  COMPOSE_FILE_PATH_ON_MANAGER: /home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/docker-compose.prod.yml
+  COMPOSE_FILE_PATH_ON_MANAGER: /home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/scripts/docker-compose.prod.yml
 
 jobs:
   #-------------------------
@@ -112,11 +112,14 @@ jobs:
       # 5. Deploy Stack via SSH to Swarm Manager (using the copied file)
       - name: Deploy Stack via SSH to Swarm Manager
         uses: appleboy/ssh-action@v1.0.3
+        env:
+            REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+            REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
         with:
           host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
           username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          envs: RDS_PASSWORD,RDS_USER,REGISTRY_PASSWORD,REGISTRY_USER,RDS_HOST,RDS_PORT,RDS_DB_NAME
+          envs: RDS_PASSWORD,RDS_USER,RDS_HOST,RDS_PORT,RDS_DB_NAME,REGISTRY_PASSWORD,REGISTRY_USER
           script: |
             set -e # Exit script on first error
 
@@ -136,11 +139,11 @@ jobs:
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
 
             echo "--- Logging into Docker Registry on Swarm Manager ---"
-            echo "${REGISTRY_PASSWORD}" | docker login ${{ env.REGISTRY }} -u "${REGISTRY_USER}" --password-stdin
+            echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
 
-            echo "--- Managing Docker Secrets for RDS Credentials ---"
-            echo "${RDS_PASSWORD}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_password - || echo "${RDS_PASSWORD}" | docker secret update rds_db_password -
-            echo "${RDS_USER}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_user - || echo "${RDS_USER}" | docker secret update rds_db_user -
+            # echo "--- Managing Docker Secrets for RDS Credentials ---"
+            # echo "${RDS_PASSWORD}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_password - || echo "${RDS_PASSWORD}" | docker secret update rds_db_password -
+            # echo "${RDS_USER}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_user - || echo "${RDS_USER}" | docker secret update rds_db_user -
 
             echo "--- Deploying Docker Stack Update using copied compose file ---"
             echo "Stack Name: ${STACK_NAME}"
