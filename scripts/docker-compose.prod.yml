@@ -13,9 +13,9 @@ services:
     networks:
       - backend-net
     deploy:
-      replicas: 3 
-#      placement:
-#        constraints: [ node.role == worker ] 
+      replicas: 2
+      placement:
+        constraints: [ node.role == worker ] # Place on worker nodes 
       update_config:
         parallelism: 1
         delay: 10s
@@ -23,29 +23,28 @@ services:
         condition: on-failure
 
   # Message Queue
-#  rabbitmq:
-#    image: rabbitmq:3.11-management-alpine # Use a specific version
-#    hostname: rabbitmq # Consistent hostname
-#    ports:
-#      - "5672:5672"  # AMQP port
-#      - "15672:15672" # Management UI port
-#    volumes:
-#      - /data/rabbitmq:/var/lib/rabbitmq/ # Persist data
-#    environment:
-#      # Use secrets for production credentials
-#      RABBITMQ_DEFAULT_USER_FILE: /run/secrets/rabbitmq_user
-#      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_password
-#    secrets:
-#      - rabbitmq_user
-#      - rabbitmq_password
-#    networks:
-#      - backend-net
-#    deploy:
-#      replicas: 1
-#      placement:
-#        constraints: [node.role == manager] # place on manager node
-#      restart_policy:
-#        condition: on-failure
+  rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+    hostname: rabbitmq # Consistent hostname
+    ports:
+      - "15672:15672" # Management UI port
+    volumes:
+      - /rabbitmq_data:/var/lib/rabbitmq/ # Persist data
+    environment:
+      # Use secrets for production credentials
+      RABBITMQ_DEFAULT_USER_FILE: /run/secrets/rabbitmq_user
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_pass
+    secrets:
+      - rabbitmq_user
+      - rabbitmq_pass
+    networks:
+      - backend-net
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager] 
+      restart_policy:
+        condition: on-failure
 #
 #  # Logging - Elasticsearch (Data Store)
 #  elasticsearch:
@@ -174,3 +173,7 @@ networks:
 secrets:
   db_connection_string: 
     external: true 
+  rabbitmq_user:
+    external: true
+  rabbitmq_pass:
+    external: true

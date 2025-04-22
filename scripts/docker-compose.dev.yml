@@ -1,18 +1,6 @@
 version: '3.8' 
 
 services:
-#  userDb:
-#    image: postgres:15.4-alpine # Use a specific version
-#    environment:
-#      POSTGRES_USER: ${DB_USER}
-#      POSTGRES_PASSWORD: ${DB_PASSWORD}
-#      POSTGRES_DB: ${DB_NAME}
-#    volumes:
-#      - ./data/postgres:/var/lib/postgresql/data # Persist data
-#    networks:
-#      - backend-net
-#    ports:
-#      - "5432:5432" # Expose PostgreSQL port
   userservice:
     build:
         context: ../
@@ -24,18 +12,17 @@ services:
       AspNetCore__Environment: Development 
     networks:
       - backend-net
-  
   rabbitmq:
-    image: rabbitmq:3.11-management-alpine # Use a specific version
-    hostname: rabbitmq # Consistent hostname
+    image: rabbitmq:3.13.7-management-alpine
+    hostname: rabbitmq_host
     ports:
       - "5672:5672"  # AMQP port
       - "15672:15672" # Management UI port
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq/ # Persist data
-#    environment:
-#      RABBITMQ_DEFAULT_USER_FILE: ${RABBITMQ_USER}
-#      RABBITMQ_DEFAULT_PASS_FILE: ${RABBITMQ_PASSWORD}
+    configs:
+        - source: rabbitmq_config
+          target: /etc/rabbitmq/rabbitmq.conf
     networks:
       - backend-net
 
@@ -129,3 +116,7 @@ services:
 networks:
   backend-net:
     driver: bridge
+    
+configs:
+  rabbitmq_config: 
+    file: ./configs/rabbitmq.conf
