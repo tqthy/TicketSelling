@@ -12,10 +12,11 @@ services:
       DB_PORT: ${DB_PORT}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_EVENT_DATABASE}
+      DB_DATABASE: ${DB_DATABASE}
       DB_SYNCHRONIZE: ${DB_SYNCHRONIZE}
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
     networks:
       - backend-net
   userservice:
