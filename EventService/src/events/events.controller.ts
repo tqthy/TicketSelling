@@ -13,7 +13,6 @@ import {
 } from "@nestjs/common";
 import { RequestWithUser } from "../auth/interfaces/request-with-user.interface";
 import { EventOwnerGuard } from "./guards/event-owner.guard";
-import { RequireEventOwner } from "./decorators/require-event-owner.decorator";
 import { EventsService } from "./events.service";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
@@ -83,7 +82,6 @@ export class EventsController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update an event" })
   @ApiResponse({
@@ -119,7 +117,6 @@ export class EventsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete an event" })
   @ApiResponse({
@@ -165,7 +162,6 @@ export class EventsController {
   @Patch(":id/submit-for-approval")
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ORGANIZER", "ADMIN")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({ summary: "Submit an event for approval" })
   @ApiResponse({
@@ -194,7 +190,6 @@ export class EventsController {
   @Patch(":id/cancel")
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({ summary: "Cancel an event" })
   @ApiResponse({
@@ -219,7 +214,6 @@ export class EventsController {
   @Patch(":id/postpone")
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Postpone an event",
@@ -248,7 +242,6 @@ export class EventsController {
   @Patch(":id/reschedule")
   @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @RequireEventOwner()
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Reschedule a postponed event",
