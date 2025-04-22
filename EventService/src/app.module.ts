@@ -26,6 +26,9 @@ import { HealthModule } from "./health/health.module";
         database: configService.get("DB_DATABASE", "event_service"),
         entities: [Event, EventSectionPricing],
         synchronize: configService.get<boolean>("DB_SYNCHRONIZE", true),
+        ssl: {
+          rejectUnauthorized: false,
+        },
       }),
     }),
     JwtModule.registerAsync({

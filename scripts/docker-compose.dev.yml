@@ -1,122 +1,169 @@
-version: '3.8' 
+version: "3.8"
 
 services:
+  eventservice:
+    build:
+      context: ../EventService
+      dockerfile: ./Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_EVENT_DATABASE}
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: ${NODE_ENV}
+    networks:
+      - backend-net
   userservice:
     build:
-        context: ../
-        dockerfile: ./UserService/Dockerfile
+      context: ../
+      dockerfile: ./UserService/Dockerfile
     ports:
       - "5106:5106"
     environment:
-      ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING} 
-      AspNetCore__Environment: Development 
+      ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
+      AspNetCore__Environment: Development
     networks:
       - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host
     ports:
-      - "5672:5672"  # AMQP port
+      - "5672:5672" # AMQP port
       - "15672:15672" # Management UI port
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq/ # Persist data
     configs:
-        - source: rabbitmq_config
-          target: /etc/rabbitmq/rabbitmq.conf
+      - source: rabbitmq_config
+        target: /etc/rabbitmq/rabbitmq.conf
     networks:
       - backend-net
 
   # Logging - Elasticsearch (Data Store)
-#  elasticsearch:
-#    image: elasticsearch:7.17.10 # Match ELK stack versions
-#    environment:
-#      - discovery.type=single-node # Simple setup for one node
-#      - bootstrap.memory_lock=true # Recommended for performance
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Adjust heap size as needed
-#    ulimits: # Required by Elasticsearch
-#      memlock:
-#        soft: -1
-#        hard: -1
-#    volumes:
-#      - /data/es_data:/usr/share/elasticsearch/data # Persist data
-#    networks:
-#      - backend-net
-#    ports:
-#      - "9200:9200" # API port
-#    # Healthcheck helps ensure ES is ready before dependent services fully start actions
-#    healthcheck:
-#      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 5
+  #  elasticsearch:
+  #    image: elasticsearch:7.17.10 # Match ELK stack versions
+  #    environment:
+  #      - discovery.type=single-node # Simple setup for one node
+  #      - bootstrap.memory_lock=true # Recommended for performance
+  #      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Adjust heap size as needed
+  #    ulimits: # Required by Elasticsearch
+  #      memlock:
+  #        soft: -1
+  #        hard: -1
+  #    volumes:
+  #      - /data/es_data:/usr/share/elasticsearch/data # Persist data
+  #    networks:
+  #      - backend-net
+  #    ports:
+  #      - "9200:9200" # API port
+  #    # Healthcheck helps ensure ES is ready before dependent services fully start actions
+  #    healthcheck:
+  #      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+  #      interval: 30s
+  #      timeout: 10s
+  #      retries: 5
 
   # Logging - Logstash (Processor)
-#  logstash:
-#    image: logstash:7.17.10 # Match ELK stack versions
-#    # Add user: root if Logstash needs to bind to privileged ports (<1024)
-#    # user: root
-#    ports:
-#      # Example: Port for Beats input (if used)
-#      # - "5044:5044"
-#      # Example: Port for TCP/UDP input (configure in logstash.conf)
-#      - "5000:5000/tcp"
-#      - "5000:5000/udp"
-#    environment:
-#      LS_JAVA_OPTS: "-Xms256m -Xmx256m" # Adjust heap size
-#      # Add other necessary environment variables
-#    volumes:
-#      # Mount the pipeline configuration
-#      - /data/logstash_pipeline:/usr/share/logstash/pipeline/
-#    configs:
-#      # Source points to the Docker config name, target is where it appears in container
-#      - source: logstash_config
-#        target: /usr/share/logstash/pipeline/logstash.conf
-#    networks:
-#      - backend-net
+  #  logstash:
+  #    image: logstash:7.17.10 # Match ELK stack versions
+  #    # Add user: root if Logstash needs to bind to privileged ports (<1024)
+  #    # user: root
+  #    ports:
+  #      # Example: Port for Beats input (if used)
+  #      # - "5044:5044"
+  #      # Example: Port for TCP/UDP input (configure in logstash.conf)
+  #      - "5000:5000/tcp"
+  #      - "5000:5000/udp"
+  #    environment:
+  #      LS_JAVA_OPTS: "-Xms256m -Xmx256m" # Adjust heap size
+  #      # Add other necessary environment variables
+  #    volumes:
+  #      # Mount the pipeline configuration
+  #      - /data/logstash_pipeline:/usr/share/logstash/pipeline/
+  #    configs:
+  #      # Source points to the Docker config name, target is where it appears in container
+  #      - source: logstash_config
+  #        target: /usr/share/logstash/pipeline/logstash.conf
+  #    networks:
+  #      - backend-net
 
   # Logging - Kibana (UI)
-#  kibana:
-#    image: kibana:7.17.10 # Match ELK stack versions
-#    ports:
-#      - "5601:5601" # Kibana UI port
-#    environment:
-#      ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
-#    networks:
-#      - backend-net
+  #  kibana:
+  #    image: kibana:7.17.10 # Match ELK stack versions
+  #    ports:
+  #      - "5601:5601" # Kibana UI port
+  #    environment:
+  #      ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
+  #    networks:
+  #      - backend-net
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - ./elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - backend-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.9.3
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+    networks:
+      - backend-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - backend-net
 
   # Monitoring - Prometheus (Data Store & Scraper)
-#  prometheus:
-#    image: prom/prometheus:v2.45.0 # Use a specific version
-#    ports:
-#      - "9090:9090" # Prometheus UI/API port
-#    volumes:
-#      - /data/prometheus:/prometheus # Persist data
-#      # Mount the configuration file
-#      - /path/on/host/prometheus.yml:/etc/prometheus/prometheus.yml # Option 1: Bind mount config
-#    # Option 2: Use Docker Configs (Recommended for Swarm)
-#    # configs:
-#    #   - source: prometheus_config
-#    #     target: /etc/prometheus/prometheus.yml
-#    # command: # Command needed when using Docker Configs
-#    #   - '--config.file=/etc/prometheus/prometheus.yml'
-#    #   - '--storage.tsdb.path=/prometheus'
-#    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-#    #   - '--web.console.templates=/usr/share/prometheus/consoles'
-#    networks:
-#      - backend-net
+  #  prometheus:
+  #    image: prom/prometheus:v2.45.0 # Use a specific version
+  #    ports:
+  #      - "9090:9090" # Prometheus UI/API port
+  #    volumes:
+  #      - /data/prometheus:/prometheus # Persist data
+  #      # Mount the configuration file
+  #      - /path/on/host/prometheus.yml:/etc/prometheus/prometheus.yml # Option 1: Bind mount config
+  #    # Option 2: Use Docker Configs (Recommended for Swarm)
+  #    # configs:
+  #    #   - source: prometheus_config
+  #    #     target: /etc/prometheus/prometheus.yml
+  #    # command: # Command needed when using Docker Configs
+  #    #   - '--config.file=/etc/prometheus/prometheus.yml'
+  #    #   - '--storage.tsdb.path=/prometheus'
+  #    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+  #    #   - '--web.console.templates=/usr/share/prometheus/consoles'
+  #    networks:
+  #      - backend-net
 
   # Monitoring - Grafana (UI)
-#  grafana:
-#    image: grafana/grafana:9.5.3 # Use a specific version
-#    ports:
-#      - "3000:3000" # Grafana UI port
-#    volumes:
-#      - /data/grafana_data:/var/lib/grafana
-        
+  #  grafana:
+  #    image: grafana/grafana:9.5.3 # Use a specific version
+  #    ports:
+  #      - "3000:3000" # Grafana UI port
+  #    volumes:
+  #      - /data/grafana_data:/var/lib/grafana
+
 networks:
+  elk:
+    driver: bridge
   backend-net:
     driver: bridge
-    
+
 configs:
-  rabbitmq_config: 
+  rabbitmq_config:
     file: ./configs/rabbitmq.conf
