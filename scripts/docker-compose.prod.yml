@@ -9,7 +9,7 @@ services:
     secrets:
       # Grant the service access to the Swarm secret
       - source: db_connection_string # Name of the secret IN SWARM
-        target: ConnectionStrings--UserServiceDb # Filename inside /run/secrets/. Matches AddKeyPerFile structure.
+        target: ConnectionStrings__UserServiceDb # Filename inside /run/secrets/. Matches AddKeyPerFile structure.
     networks:
       - backend-net
     deploy:
