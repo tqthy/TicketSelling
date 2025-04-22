@@ -8,6 +8,8 @@ using UserService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Configuration.AddKeyPerFile(directoryPath: "/run/secrets", optional: true, reloadOnChange: true);
 // DbContext configuration
 var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
 if (string.IsNullOrEmpty(connectionString))
@@ -57,7 +59,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserService, UserService.Services.UserService>(); 
 
-builder.Configuration.AddKeyPerFile(directoryPath: "/run/secrets", optional: true, reloadOnChange: true);
+
 
 var app = builder.Build();
 
