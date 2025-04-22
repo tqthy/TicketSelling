@@ -29,14 +29,10 @@ services:
     ports:
       - "15672:15672" # Management UI port
     volumes:
-      - /rabbitmq_data:/var/lib/rabbitmq/ # Persist data
-    environment:
-      # Use secrets for production credentials
-      RABBITMQ_DEFAULT_USER_FILE: /run/secrets/rabbitmq_user
-      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_pass
-    secrets:
-      - rabbitmq_user
-      - rabbitmq_pass
+      - ~/data_volume/rabbitmq_data:/var/lib/rabbitmq/ # Persist data
+    configs:
+      - source: rabbitmq_config
+        target: /etc/rabbitmq/rabbitmq.conf
     networks:
       - backend-net
     deploy:
@@ -169,11 +165,10 @@ networks:
   backend-net:
     driver: overlay
     
-    
+configs:
+  rabbitmq_config:
+    external: true
+
 secrets:
   db_connection_string: 
     external: true 
-  rabbitmq_user:
-    external: true
-  rabbitmq_pass:
-    external: true
