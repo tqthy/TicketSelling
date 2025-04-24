@@ -1,0 +1,42 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}", 
+      "DownstreamScheme": "http",                            
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "userservice",                               
+          "Port": 8082                                   
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/{everything}", 
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ]
+    },
+    {
+      "DownstreamPathTemplate": "/events/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "eventservice",
+          "Port": 8081
+        }
+      ],
+      "UpstreamPathTemplate": "/api/events/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ],
+
+
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+
+      "AddHeadersToRequest": {
+        "X-User-Id": "Claims[sub] > value",
+        "X-User-Roles": "Claims[role] > value"
+      }
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:8080" 
+  }
+}

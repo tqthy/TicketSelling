@@ -1,12 +1,23 @@
 version: "3.8"
 
 services:
+  apigateway:
+    build:
+      context: ../
+      dockerfile: ./ApiGateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8080
+      JwtSettings__Secret: ${JWT_SECRET}
+    networks:
+      - backend-net
   eventservice:
     build:
       context: ../EventService
       dockerfile: ./Dockerfile
-    ports:
-      - "3001:3001"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -23,11 +34,11 @@ services:
     build:
       context: ../
       dockerfile: ./UserService/Dockerfile
-    ports:
-      - "5106:5106"
     environment:
       ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
       AspNetCore__Environment: Development
+      JwtSettings__Secret: ${JWT_SECRET}
+      ASPNETCORE_URLS: http://+:8082
     networks:
       - backend-net
   rabbitmq:
@@ -160,8 +171,6 @@ services:
   #      - /data/grafana_data:/var/lib/grafana
 
 networks:
-  elk:
-    driver: bridge
   backend-net:
     driver: bridge
 
