@@ -105,15 +105,14 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-  # Logging - Kibana (UI)
   kibana:
-    image: kibana:7.17.10 # Match ELK stack versions
+    image: kibana:7.17.10
     ports:
-      - "5601:5601" # Kibana UI port
+      - "5601:5601" # UI port
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
-      SERVER_NAME: kibana.example.com # Set server name
-      ELASTICSEARCH_SERVICEACCOUNTTOKEN: false # Disable service account token
+      # SERVER_NAME: kibana.example.com
+      ELASTICSEARCH_SERVICEACCOUNTTOKEN: "false" # because we have not enabled x pack for elastic yet (for testing)
     networks:
       - backend-net
     depends_on:
