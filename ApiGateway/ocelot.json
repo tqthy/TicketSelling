@@ -13,7 +13,7 @@
       "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ]
     },
     {
-      "DownstreamPathTemplate": "/events/{everything}",
+      "DownstreamPathTemplate": "/api/events/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -22,6 +22,29 @@
         }
       ],
       "UpstreamPathTemplate": "/api/events/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ],
+
+
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+
+      "AddHeadersToRequest": {
+        "X-User-Id": "Claims[sub] > value",
+        "X-User-Roles": "Claims[role] > value"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/venues/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "venueservice",
+          "Port": 8083
+        }
+      ],
+      "UpstreamPathTemplate": "/api/venues/{everything}",
       "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ],
 
 

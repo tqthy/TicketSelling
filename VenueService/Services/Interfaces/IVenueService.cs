@@ -42,5 +42,39 @@ namespace VenueService.Services.Interfaces
         /// <param name="id">The GUID ID of the venue to delete.</param>
         /// <returns>True if deletion was successful, False if venue was not found.</returns>
         Task<bool> DeleteVenueAsync(Guid id);
+        
+        /// <summary>
+        /// Creates a new section, optionally with its seats, within a specified venue.
+        /// </summary>
+        /// <param name="venueId">The ID of the venue to add the section to.</param>
+        /// <param name="sectionWithSeatsDto">The DTO containing section details and optional seat definitions.</param>
+        /// <returns>The created SectionDto, potentially including created seats, or null if the venue was not found.</returns>
+        Task<SectionDto?> CreateSectionWithSeatsAsync(Guid venueId, CreateSectionWithSeatsDto sectionWithSeatsDto);
+
+        // Add other Section/Seat specific methods here or in separate interfaces...
+        Task<IEnumerable<SectionDto>> GetSectionsByVenueAsync(Guid venueId);
+        Task<SectionDto?> GetSectionByIdAsync(Guid venueId, Guid sectionId);
+        
+        /// <summary>
+        /// Retrieves all sections for a given venue.
+        /// </summary>
+        Task<IEnumerable<SectionDto>> GetAllSectionsForVenueAsync(Guid venueId);
+
+        /// <summary>
+        /// Updates an existing section.
+        /// </summary>
+        /// <param name="venueId">The ID of the venue the section belongs to.</param>
+        /// <param name="sectionId">The ID of the section to update.</param>
+        /// <param name="updateSectionDto">The DTO with updated section data.</param>
+        /// <returns>The updated SectionDto, or null if not found or venue mismatch.</returns>
+        Task<SectionDto?> UpdateSectionAsync(Guid venueId, Guid sectionId, UpdateSectionDto updateSectionDto);
+
+        /// <summary>
+        /// Deletes a section.
+        /// </summary>
+        /// <param name="venueId">The ID of the venue the section belongs to.</param>
+        /// <param name="sectionId">The ID of the section to delete.</param>
+        /// <returns>True if deletion was successful, false if not found or venue mismatch.</returns>
+        Task<bool> DeleteSectionAsync(Guid venueId, Guid sectionId);
     }
 }

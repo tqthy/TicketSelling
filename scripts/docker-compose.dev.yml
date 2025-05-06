@@ -41,6 +41,16 @@ services:
       ASPNETCORE_URLS: http://+:8082
     networks:
       - backend-net
+  venueservice:
+    build:
+      context: ../
+      dockerfile: ./VenueService/Dockerfile
+    environment:
+      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8083
+    networks:
+      - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host
