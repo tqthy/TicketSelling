@@ -1,9 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using VenueService.Data;
+using VenueService.Helper;
 using VenueService.Middleware;
 using VenueService.Services.Interfaces;
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(ConfigurationHelper.Configuration) // Helper to get config early
+    .Enrich.FromLogContext()
+    .CreateBootstrapLogger(); // Use minimal logger until host is built
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog for ASP.NET Core host
+builder.Host.UseSerilog((context, services, configuration) => configuration
+        .ReadFrom.Configuration(context.Configuration) // Also requires the package
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+    // ... other Serilog config ...
+);
 
 // Add services to the container.
 
@@ -33,6 +48,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 

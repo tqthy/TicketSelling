@@ -8,7 +8,6 @@ using UserService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Configuration.AddKeyPerFile(directoryPath: "/run/secrets", optional: true, reloadOnChange: true);
 // DbContext configuration
 var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
