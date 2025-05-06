@@ -16,7 +16,6 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         public Guid EventId { get; private set; }
         public string Status { get; private set; }
         public decimal TotalPrice { get; private set; }
-        public DateTime CreatedAt { get; private set; }
         public DateTime? ExpiresAt { get; private set; } // Reservation expiry
 
         // Navigation property for owned entities

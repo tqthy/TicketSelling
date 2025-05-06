@@ -66,7 +66,7 @@ public class BookingsController : ControllerBase
         {
              return NotFound(new { message = result.ErrorMessage });
         }
-         else if (result.ErrorMessage?.Contains("pricing information") ?? false) // Hint based on error message
+        else if (result.ErrorMessage?.Contains("pricing information") ?? false) // Hint based on error message
         {
              return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = result.ErrorMessage });
         }

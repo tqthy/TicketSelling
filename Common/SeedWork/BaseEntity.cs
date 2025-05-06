@@ -11,9 +11,19 @@ namespace Common.SeedWork
         /// <summary>
         /// Unique identifier for the entity.
         /// Setter is protected to allow ORMs/persistence layers to set it,
-        //  but prevents arbitrary changes from outside.
+        ///  but prevents arbitrary changes from outside.
         /// </summary>
         public virtual TId Id { get; protected set; }
+        
+        /// <summary>
+        /// Create time of the entity
+        /// </summary>
+        public DateTime CreatedAt { get; protected set; } = DateTime.UtcNow;
+        
+        /// <summary>
+        /// Last modified time of the entity
+        /// </summary>
+        public DateTime? UpdatedAt { get; protected set; } = DateTime.UtcNow;
 
         // --- Domain Events Handling ---
 
