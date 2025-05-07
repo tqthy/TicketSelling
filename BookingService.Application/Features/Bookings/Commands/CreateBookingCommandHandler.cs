@@ -1,4 +1,3 @@
-// BookingService.Application/Features/Bookings/Commands/CreateBooking/CreateBookingCommandHandler.cs
 using MediatR;
 using MassTransit; // For IPublishEndpoint
 using Common.Messages; // For BookingInitiated integration event
@@ -36,7 +35,7 @@ namespace BookingService.Application.Features.Bookings.Commands
         private readonly ILogger<CreateBookingCommandHandler> _logger;
         private readonly BookingDbContext _dbContext; // Inject DbContext for Transaction Control (could use IUnitOfWork abstraction)
 
-        private static readonly TimeSpan ReservationTimeout = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan ReservationTimeout = TimeSpan.FromMinutes(10);
 
         public CreateBookingCommandHandler(
             IBookingRepository bookingRepository,
@@ -80,6 +79,7 @@ namespace BookingService.Application.Features.Bookings.Commands
                     decimal price;
                     try
                     {
+                        // TODO: Call external service to get price
                         // price = await _eventServiceApiClient.GetSeatPriceAsync(request.EventId, request.SeatId); // Call external service
                          price = 50.00m; // Placeholder
                          if (price <= 0) throw new InvalidOperationException("Invalid price.");

@@ -16,7 +16,7 @@ using BookingService.Application.Features.Bookings.DTOs; // For API Request DTO 
 [Authorize] // Applied at controller level
 public class BookingsController : ControllerBase
 {
-    private readonly ISender _mediator; // Use MediatR ISender/IMediator
+    private readonly ISender _mediator; 
     private readonly ILogger<BookingsController> _logger;
 
     public BookingsController(ISender mediator, ILogger<BookingsController> logger)

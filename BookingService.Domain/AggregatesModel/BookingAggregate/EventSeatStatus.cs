@@ -36,11 +36,11 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         private EventSeatStatus() { }
 
         // Optional: Public constructor if needed, ensure valid initial state
-        public EventSeatStatus(Guid eventId, Guid seatId, string initialStatus = SeatAvailabilityStatus.Available)
+        public EventSeatStatus(Guid eventId, Guid seatId)
         {
             EventId = eventId;
             SeatId = seatId;
-            Status = initialStatus; // Default to Available
+            Status = SeatAvailabilityStatus.Available; // Default to Available
             ReservedUntil = null;
             CurrentBookingId = null;
         }

@@ -37,6 +37,7 @@ namespace BookingService.Application.Contracts.Infrastructure
         /// <exception cref="HttpRequestException">Thrown if the API call fails.</exception>
         Task<Guid?> GetSectionIdForSeatAsync(Guid seatId, CancellationToken cancellationToken = default);
 
+        Task<List<SeatDetailsDto>> GetSeatsForVenueAsync(Guid venueId, CancellationToken cancellationToken = default);
         // Add other methods as needed to interact with the Venue Service...
         // e.g., GetVenueDetailsAsync(Guid venueId), GetSectionDetailsAsync(Guid sectionId)
     }
