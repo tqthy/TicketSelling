@@ -1,7 +1,8 @@
 using VenueService.Dtos;
 using VenueService.Repositories;
+using VenueService.Services.Interfaces;
 
-public class SeatService
+public class SeatService : ISeatService
 {
     private readonly ISeatRepository _seatRepository;
 
