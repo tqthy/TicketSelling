@@ -17,7 +17,6 @@ export class IsFutureDateConstraint implements ValidatorConstraintInterface {
       today.setHours(0, 0, 0, 0);
       const dateToCheck = new Date(date);
 
-      // Check if the date is valid
       if (isNaN(dateToCheck.getTime())) {
         return false;
       }
@@ -104,7 +103,7 @@ export class IsTimeAfterConstraint implements ValidatorConstraintInterface {
 
     if (!startTime) return true;
 
-    // Check if both are in HH:MM format
+    // HH:MM format
     if (!startTime.match(/^\d{2}:\d{2}$/) || !endTime.match(/^\d{2}:\d{2}$/)) {
       return false;
     }

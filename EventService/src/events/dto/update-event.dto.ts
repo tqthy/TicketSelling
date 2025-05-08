@@ -112,6 +112,4 @@ export class UpdateEventDto extends PartialType(
   @IsOptional()
   @IsString({ message: "Details must be a string" })
   details?: string;
-
-  // Status is managed internally through specific endpoints
 }

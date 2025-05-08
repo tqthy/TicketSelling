@@ -1,5 +1,6 @@
 import { Module, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
 import { RequestValidationMiddleware } from "./common/middleware/request-validation.middleware";
+import { TestUserInjectionMiddleware } from "./common/middleware/test-user-injection.middleware";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EventsModule } from "./events/events.module";
@@ -31,14 +32,6 @@ import { HealthModule } from "./health/health.module";
         },
       }),
     }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get("JWT_SECRET", "your-secret-key"),
-        signOptions: { expiresIn: "1h" },
-      }),
-    }),
     EventsModule,
     AuthModule,
     HealthModule,
@@ -47,7 +40,7 @@ import { HealthModule } from "./health/health.module";
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(RequestValidationMiddleware)
+      .apply(TestUserInjectionMiddleware, RequestValidationMiddleware)
       .forRoutes({ path: "*", method: RequestMethod.ALL });
   }
 }

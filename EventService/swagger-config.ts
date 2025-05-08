@@ -1,33 +1,17 @@
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { INestApplication } from "@nestjs/common";
 
-/**
- * Sets up Swagger documentation for the application
- * @param app The NestJS application instance
- */
 export function setupSwagger(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle("Event Service API")
     .setDescription("API for managing events in the ticket selling system")
     .setVersion("1.0")
-    .addBearerAuth(
-      {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
-        name: "Authorization",
-        description: "Enter JWT token",
-        in: "header",
-      },
-      "JWT-auth" // This is a key to be used in @ApiBearerAuth() decorator
-    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
     deepScanRoutes: true,
   });
 
-  // Add custom examples to the Swagger documentation
   addCustomExamplesToSwagger(document);
 
   SwaggerModule.setup("api", app, document, {
@@ -39,10 +23,6 @@ export function setupSwagger(app: INestApplication) {
   });
 }
 
-/**
- * Adds custom examples to the Swagger documentation
- * @param document The Swagger document
- */
 function addCustomExamplesToSwagger(document: any) {
   // Example for Create Event endpoint
   if (document.paths["/events"] && document.paths["/events"].post) {

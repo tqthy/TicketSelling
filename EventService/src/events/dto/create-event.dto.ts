@@ -1,21 +1,17 @@
 import {
   IsArray,
-  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
-  IsUrl,
   ValidateNested,
-  IsPositive,
 } from "class-validator";
 import {
   IsFutureDate,
   IsAfterField,
   IsTimeAfter,
 } from "../../common/validators/date-validators";
-// Status is managed internally
 import { Type } from "class-transformer";
 import { EventSectionPricingDto } from "./event-section-pricing.dto";
 import { ApiProperty } from "@nestjs/swagger";
