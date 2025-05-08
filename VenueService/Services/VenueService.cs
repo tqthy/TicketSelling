@@ -331,7 +331,7 @@ namespace VenueService.Services
                 throw;
             }
         }
-         
+
         // Helper mapping method 
         private SectionDto MapSectionToDto(Section section, bool includeSeats)
         {

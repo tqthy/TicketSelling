@@ -3,6 +3,7 @@ using Serilog;
 using VenueService.Data;
 using VenueService.Helper;
 using VenueService.Middleware;
+using VenueService.Repositories;
 using VenueService.Services.Interfaces;
 
 Log.Logger = new LoggerConfiguration()
@@ -27,6 +28,8 @@ builder.Services.AddDbContext<VenueDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("VenueDb")));
 
 builder.Services.AddScoped<IVenueService, VenueService.Services.VenueService>();
+builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 
 builder.Services.AddControllers(options =>
 {
