@@ -5,8 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -24,15 +24,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      message: 
-        typeof exceptionResponse === 'object' && 'message' in exceptionResponse
-          ? exceptionResponse['message']
+      message:
+        typeof exceptionResponse === "object" && "message" in exceptionResponse
+          ? exceptionResponse["message"]
           : exception.message,
     };
 
     this.logger.error(
       `${request.method} ${request.url} ${status}`,
-      exception.stack,
+      exception.stack
     );
 
     response.status(status).json(errorResponse);
@@ -47,16 +47,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    
-    const status = 
+
+    const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message = 
+    const message =
       exception instanceof HttpException
         ? exception.message
-        : 'Internal server error';
+        : "Internal server error";
 
     const errorResponse = {
       statusCode: status,
@@ -68,7 +68,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     this.logger.error(
       `${request.method} ${request.url} ${status}`,
-      exception instanceof Error ? exception.stack : String(exception),
+      exception instanceof Error ? exception.stack : String(exception)
     );
 
     response.status(status).json(errorResponse);

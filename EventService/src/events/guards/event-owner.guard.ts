@@ -2,6 +2,8 @@ import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 
 @Injectable()
 export class EventOwnerGuard implements CanActivate {
+  // constructor(private eventsService: EventsService) {}
+
   constructor() {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -18,14 +20,11 @@ export class EventOwnerGuard implements CanActivate {
       return true;
     }
 
-    // always true for dev now, will check if organizer is event owner in production
+    // always true for dev now
     return true;
 
     /*
     // For production, uncomment this code and inject EventsService in the constructor
-    // import { EventsService } from "../events.service";
-    // import { NotFoundException } from "@nestjs/common";
-    // constructor(private eventsService: EventsService) {}
     try {
       const event = await this.eventsService.findOne(eventId);
       return event.organizerUserId === user.userId;

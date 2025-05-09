@@ -17,14 +17,7 @@ import { EventsService } from "./events.service";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { RescheduleEventDto } from "./dto/reschedule-event.dto";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 
@@ -34,9 +27,8 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles("ORGANIZER", "ADMIN")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Create a new event" })
   @ApiResponse({
     status: 201,
@@ -80,9 +72,8 @@ export class EventsController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Update an event" })
   @ApiResponse({
     status: 200,
@@ -105,19 +96,13 @@ export class EventsController {
     @Body() updateEventDto: UpdateEventDto,
     @Req() req: RequestWithUser
   ) {
-    return this.eventsService.update(
-      id,
-      updateEventDto,
-      req.user.userId,
-      req.user.role
-    );
+    return this.eventsService.update(id, updateEventDto);
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Delete an event" })
   @ApiResponse({
     status: 204,
@@ -132,13 +117,12 @@ export class EventsController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   remove(@Param("id") id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.remove(id, req.user.userId, req.user.role);
+    return this.eventsService.remove(id);
   }
 
   @Patch(":id/approve")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles("ADMIN")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Approve and publish an event" })
   @ApiResponse({
     status: 200,
@@ -156,13 +140,12 @@ export class EventsController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   approveEvent(@Param("id") id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.approveEvent(id, req.user.role);
+    return this.eventsService.approveEvent(id);
   }
 
   @Patch(":id/submit-for-approval")
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ORGANIZER", "ADMIN")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Submit an event for approval" })
   @ApiResponse({
     status: 200,
@@ -180,17 +163,12 @@ export class EventsController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   submitForApproval(@Param("id") id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.submitForApproval(
-      id,
-      req.user.userId,
-      req.user.role
-    );
+    return this.eventsService.submitForApproval(id);
   }
 
   @Patch(":id/cancel")
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @ApiBearerAuth()
   @ApiOperation({ summary: "Cancel an event" })
   @ApiResponse({
     status: 200,
@@ -208,13 +186,12 @@ export class EventsController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   cancelEvent(@Param("id") id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.cancelEvent(id, req.user.userId, req.user.role);
+    return this.eventsService.cancelEvent(id);
   }
 
   @Patch(":id/postpone")
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @ApiBearerAuth()
   @ApiOperation({
     summary: "Postpone an event",
     description:
@@ -236,13 +213,12 @@ export class EventsController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   postponeEvent(@Param("id") id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.postponeEvent(id, req.user.userId, req.user.role);
+    return this.eventsService.postponeEvent(id);
   }
 
   @Patch(":id/reschedule")
-  @UseGuards(JwtAuthGuard, RolesGuard, EventOwnerGuard)
+  @UseGuards(RolesGuard, EventOwnerGuard)
   @Roles("ADMIN", "ORGANIZER")
-  @ApiBearerAuth()
   @ApiOperation({
     summary: "Reschedule a postponed event",
     description:
@@ -272,11 +248,6 @@ export class EventsController {
     @Body() rescheduleEventDto: RescheduleEventDto,
     @Req() req: RequestWithUser
   ) {
-    return this.eventsService.rescheduleEvent(
-      id,
-      rescheduleEventDto,
-      req.user.userId,
-      req.user.role
-    );
+    return this.eventsService.rescheduleEvent(id, rescheduleEventDto);
   }
 }

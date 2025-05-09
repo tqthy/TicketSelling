@@ -86,90 +86,31 @@ export class EventsService {
     return event;
   }
 
-  async update(
-    id: string,
-    updateEventDto: UpdateEventDto,
-    userId: string,
-    userRole: string
-  ): Promise<Event> {
-    this.logger.log(
-      `Updating event with ID: ${id} by user: ${userId} with role: ${userRole}`
-    );
+  async update(id: string, updateEventDto: UpdateEventDto): Promise<Event> {
     const event = await this.findOne(id);
 
-    // Only allow organizers who created the event or admins to update events
-    if (userRole !== "ADMIN" && userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "You are not authorized to update this event"
-      );
-    }
-
-    // If user is an organizer, check if they are the creator of this event
-    if (userRole === "ORGANIZER" && event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can update it"
-      );
-    }
-
-    // Check event status for update restrictions
-    if (event.status !== EventStatus.DRAFT) {
-      // We don't update date/time in the update method anymore
-    }
-
-    // Extract data from the DTO
     const { ...eventData } = updateEventDto;
-
-    // Update the event with the new data
     Object.assign(event, eventData);
     const updatedEvent = await this.eventRepository.save(event);
-
-    // We don't update section pricing in the update method anymore
-
     return updatedEvent;
   }
 
-  async remove(id: string, userId: string, userRole: string): Promise<void> {
+  async remove(id: string): Promise<void> {
     const event = await this.findOne(id);
 
-    // Only allow organizers who created the event or admins to delete events
-    if (userRole !== "ADMIN" && userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "You are not authorized to delete this event"
-      );
-    }
-
-    // If user is an organizer, check if they are the creator of this event
-    if (userRole === "ORGANIZER" && event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can delete it"
-      );
-    }
-
-    // Delete section pricing first (foreign key constraint)
     await this.eventSectionPricingRepository.delete({ eventId: id });
-
-    // Then delete the event
     await this.eventRepository.remove(event);
   }
 
-  async approveEvent(id: string, userRole: string): Promise<Event> {
-    // Only admins can approve and publish events
-    if (userRole !== "ADMIN") {
-      throw new UnauthorizedException(
-        "Only admins can approve and publish events"
-      );
-    }
-
+  async approveEvent(id: string): Promise<Event> {
     const event = await this.findOne(id);
 
-    // Validate status transition: Submit for Approval -> Published
     if (event.status !== EventStatus.SUBMIT_FOR_APPROVAL) {
       throw new UnauthorizedException(
         `Cannot approve and publish event. Current status: ${event.status}. Only events in Submit for Approval status can be approved and published.`
       );
     }
 
-    // Validate event dates before publishing
     const now = new Date();
     if (event.startDateTime <= now) {
       throw new UnauthorizedException(
@@ -181,36 +122,15 @@ export class EventsService {
     return this.eventRepository.save(event);
   }
 
-  async submitForApproval(
-    id: string,
-    userId: string,
-    userRole: string
-  ): Promise<Event> {
-    this.logger.log(`Submitting event ${id} for approval by user ${userId}`);
-    // Only organizers can submit events for approval
-    if (userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "Only organizers can submit events for approval"
-      );
-    }
-
+  async submitForApproval(id: string): Promise<Event> {
     const event = await this.findOne(id);
 
-    // Check if the user is the organizer of this event
-    if (event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can submit it for approval"
-      );
-    }
-
-    // Validate status transition: Draft -> Submit for Approval
     if (event.status !== EventStatus.DRAFT) {
       throw new UnauthorizedException(
         `Cannot submit event for approval. Current status: ${event.status}. Only events in Draft status can be submitted for approval.`
       );
     }
 
-    // Validate that the event has all required information
     if (!this.validateEventForSubmission(event)) {
       throw new UnauthorizedException(
         "Event is missing required information and cannot be submitted for approval"
@@ -221,30 +141,9 @@ export class EventsService {
     return this.eventRepository.save(event);
   }
 
-  // publishEvent method has been combined with approveEvent
-
-  async cancelEvent(
-    id: string,
-    userId: string,
-    userRole: string
-  ): Promise<Event> {
-    // Only admins or organizers can cancel events
-    if (userRole !== "ADMIN" && userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "Only admins or organizers can cancel events"
-      );
-    }
-
+  async cancelEvent(id: string): Promise<Event> {
     const event = await this.findOne(id);
 
-    // If user is an organizer, check if they are the creator of this event
-    if (userRole === "ORGANIZER" && event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can cancel it"
-      );
-    }
-
-    // Validate status transition: Published -> Canceled
     if (event.status !== EventStatus.PUBLISHED) {
       throw new UnauthorizedException(
         `Cannot cancel event. Current status: ${event.status}. Only events in Published status can be canceled.`
@@ -255,28 +154,8 @@ export class EventsService {
     return this.eventRepository.save(event);
   }
 
-  async postponeEvent(
-    id: string,
-    userId: string,
-    userRole: string
-  ): Promise<Event> {
-    // Only admins or organizers can postpone events
-    if (userRole !== "ADMIN" && userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "Only admins or organizers can postpone events"
-      );
-    }
-
+  async postponeEvent(id: string): Promise<Event> {
     const event = await this.findOne(id);
-
-    // If user is an organizer, check if they are the creator of this event
-    if (userRole === "ORGANIZER" && event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can postpone it"
-      );
-    }
-
-    // Validate status transition: Published -> Postponed
     if (event.status !== EventStatus.PUBLISHED) {
       throw new UnauthorizedException(
         `Cannot postpone event. Current status: ${event.status}. Only events in Published status can be postponed.`
@@ -289,39 +168,19 @@ export class EventsService {
 
   async rescheduleEvent(
     id: string,
-    rescheduleEventDto: RescheduleEventDto,
-    userId: string,
-    userRole: string
+    rescheduleEventDto: RescheduleEventDto
   ): Promise<Event> {
-    // Only admins or organizers can reschedule events
-    if (userRole !== "ADMIN" && userRole !== "ORGANIZER") {
-      throw new UnauthorizedException(
-        "Only admins or organizers can reschedule events"
-      );
-    }
-
     const event = await this.findOne(id);
 
-    // If user is an organizer, check if they are the creator of this event
-    if (userRole === "ORGANIZER" && event.organizerUserId !== userId) {
-      throw new UnauthorizedException(
-        "Only the organizer who created this event can reschedule it"
-      );
-    }
-
-    // Validate status transition: Postponed -> Rescheduled
     if (event.status !== EventStatus.POSTPONED) {
       throw new UnauthorizedException(
         `Cannot reschedule event. Current status: ${event.status}. Only events in Postponed status can be rescheduled.`
       );
     }
-
-    // Convert date and time strings to Date objects
     const { date, startTime, endTime } = rescheduleEventDto;
     const startDateTime = new Date(`${date}T${startTime}:00`);
     const endDateTime = new Date(`${date}T${endTime}:00`);
 
-    // Update the event dates
     event.startDateTime = startDateTime;
     event.endDateTime = endDateTime;
     event.status = EventStatus.RESCHEDULED;
@@ -329,15 +188,9 @@ export class EventsService {
     return this.eventRepository.save(event);
   }
 
-  /**
-   * Validates that an event has all required information before submission
-   * @param event The event to validate
-   * @returns boolean indicating if the event is valid for submission
-   */
   private validateEventForSubmission(event: Event): boolean {
     this.logger.log(`Validating event ${event.eventId} for submission`);
 
-    // Check that all required fields are present
     if (
       !event.name ||
       !event.description ||
@@ -355,7 +208,6 @@ export class EventsService {
       return false;
     }
 
-    // Check that the event has at least one section pricing
     const hasSectionPricing =
       event.sectionPricing && event.sectionPricing.length > 0;
 
