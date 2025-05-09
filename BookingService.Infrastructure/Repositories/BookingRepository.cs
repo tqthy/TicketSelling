@@ -87,5 +87,10 @@ namespace BookingService.Infrastructure.Repositories
             // mark all properties as modified, potentially causing less efficient SQL updates.
             // Setting the state is often preferred if you know the entity is already tracked.
         }
+
+        public Task<IEnumerable<object>> GetBookingsByUserIdAsync(Guid requestUserId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

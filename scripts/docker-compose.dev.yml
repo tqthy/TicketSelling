@@ -41,16 +41,16 @@ services:
       ASPNETCORE_URLS: http://+:8082
     networks:
       - backend-net
-  venueservice:
-    build:
-      context: ../
-      dockerfile: ./VenueService/Dockerfile
-    environment:
-      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
-      AspNetCore__Environment: Development
-      ASPNETCORE_URLS: http://+:8083
-    networks:
-      - backend-net
+#  venueservice:
+#    build:
+#      context: ../
+#      dockerfile: ./VenueService/Dockerfile
+#    environment:
+#      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
+#      AspNetCore__Environment: Development
+#      ASPNETCORE_URLS: http://+:8083
+#    networks:
+#      - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host
@@ -123,9 +123,10 @@ services:
   #    networks:
   #      - backend-net
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     environment:
       - discovery.type=single-node
+#      - xpack.security.enabled=false
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data
     ports:
@@ -134,16 +135,16 @@ services:
       - backend-net
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.9.3
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline
     ports:
-      - "5000:5000"
+      - "5001:5001"
     networks:
       - backend-net
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.9.3
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
