@@ -3,7 +3,7 @@ import { INestApplication } from "@nestjs/common";
 
 export function setupSwagger(app: INestApplication) {
   const config = new DocumentBuilder()
-    .setTitle("Event Service API")
+    .setTitle("Event Service Documentation")
     .setDescription("API for managing events in the ticket selling system")
     .setVersion("1.0")
     .build();
@@ -12,6 +12,8 @@ export function setupSwagger(app: INestApplication) {
     deepScanRoutes: true,
   });
 
+  document.paths = {};
+  defineEventRoutes(document);
   addCustomExamplesToSwagger(document);
 
   SwaggerModule.setup("api", app, document, {
@@ -23,8 +25,309 @@ export function setupSwagger(app: INestApplication) {
   });
 }
 
+function defineEventRoutes(document: any) {
+  // POST /events - Create a new event
+  document.paths["/events"] = {
+    post: {
+      tags: ["events"],
+      summary: "Create a new event",
+      operationId: "create",
+      security: [{ bearer: [] }],
+      requestBody: {
+        description: "Event to create",
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/CreateEventDto",
+            },
+          },
+        },
+      },
+      responses: {
+        "201": { description: "The event has been successfully created." },
+        "400": { description: "Bad Request - Invalid input data." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+      },
+    },
+    get: {
+      tags: ["events"],
+      summary: "Get all events",
+      operationId: "findAll",
+      responses: {
+        "200": { description: "Return all events." },
+      },
+    },
+  };
+
+  // GET /events/published - Get all published events
+  document.paths["/events/published"] = {
+    get: {
+      tags: ["events"],
+      summary: "Get all published events",
+      operationId: "findAllPublished",
+      responses: {
+        "200": { description: "Return all published events." },
+      },
+    },
+  };
+
+  // GET /events/{id} - Get a specific event by ID
+  document.paths["/events/{id}"] = {
+    get: {
+      tags: ["events"],
+      summary: "Get a specific event by ID",
+      operationId: "findOne",
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "200": { description: "Return the event." },
+        "404": { description: "Event not found." },
+      },
+    },
+    patch: {
+      tags: ["events"],
+      summary: "Update an event",
+      operationId: "update",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      requestBody: {
+        description: "Event data to update",
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/UpdateEventDto",
+            },
+          },
+        },
+      },
+      responses: {
+        "200": { description: "The event has been successfully updated." },
+        "400": { description: "Bad Request - Invalid input data." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found." },
+      },
+    },
+    delete: {
+      tags: ["events"],
+      summary: "Delete an event",
+      operationId: "remove",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "204": { description: "The event has been successfully deleted." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found." },
+      },
+    },
+  };
+
+  // PATCH /events/{id}/approve - Approve and publish an event
+  document.paths["/events/{id}/approve"] = {
+    patch: {
+      tags: ["events"],
+      summary: "Approve and publish an event",
+      description:
+        "Approves an event that has been submitted for approval. The event status will change from PENDING_APPROVAL to APPROVED. Only admins can approve events.",
+      operationId: "approveEvent",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "200": {
+          description:
+            "The event has been successfully approved and published.",
+        },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found or not in the correct status." },
+      },
+    },
+  };
+
+  // PATCH /events/{id}/submit-for-approval - Submit an event for approval
+  document.paths["/events/{id}/submit-for-approval"] = {
+    patch: {
+      tags: ["events"],
+      summary: "Submit an event for approval",
+      description:
+        "Submits a draft event for approval by an admin. The event status will change from DRAFT to PENDING_APPROVAL.",
+      operationId: "submitForApproval",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "200": {
+          description:
+            "The event has been successfully submitted for approval.",
+        },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found or not in the correct status." },
+      },
+    },
+  };
+
+  // PATCH /events/{id}/cancel - Cancel an event
+  document.paths["/events/{id}/cancel"] = {
+    patch: {
+      tags: ["events"],
+      summary: "Cancel an event",
+      description:
+        "Cancels an event. The event status will change to CANCELLED. Both organizers and admins can cancel events.",
+      operationId: "cancelEvent",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "200": { description: "The event has been successfully canceled." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found or not in the correct status." },
+      },
+    },
+  };
+
+  // PATCH /events/{id}/postpone - Postpone an event
+  document.paths["/events/{id}/postpone"] = {
+    patch: {
+      tags: ["events"],
+      summary: "Postpone an event",
+      description:
+        "Changes a published event's status to Postponed, allowing it to be rescheduled later",
+      operationId: "postponeEvent",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      responses: {
+        "200": { description: "The event has been successfully postponed." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found or not in the correct status." },
+      },
+    },
+  };
+
+  // PATCH /events/{id}/reschedule - Reschedule a postponed event
+  document.paths["/events/{id}/reschedule"] = {
+    patch: {
+      tags: ["events"],
+      summary: "Reschedule a postponed event",
+      description:
+        "Sets new date and time for a postponed event and changes its status to Rescheduled",
+      operationId: "rescheduleEvent",
+      security: [{ bearer: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "Event ID",
+          required: true,
+          schema: {
+            type: "string",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+          },
+        },
+      ],
+      requestBody: {
+        description: "New date and time for the event",
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/RescheduleEventDto",
+            },
+          },
+        },
+      },
+      responses: {
+        "200": { description: "The event has been successfully rescheduled." },
+        "400": { description: "Bad Request - Invalid input data." },
+        "401": { description: "Unauthorized." },
+        "403": { description: "Forbidden." },
+        "404": { description: "Event not found or not in the correct status." },
+      },
+    },
+  };
+}
+
 function addCustomExamplesToSwagger(document: any) {
-  // Example for Create Event endpoint
   if (document.paths["/events"] && document.paths["/events"].post) {
     document.paths["/events"].post.requestBody = {
       ...document.paths["/events"].post.requestBody,
@@ -99,7 +402,6 @@ function addCustomExamplesToSwagger(document: any) {
     };
   }
 
-  // Example for Update Event endpoint
   if (document.paths["/events/{id}"] && document.paths["/events/{id}"].patch) {
     document.paths["/events/{id}"].patch.requestBody = {
       ...document.paths["/events/{id}"].patch.requestBody,
@@ -134,7 +436,6 @@ function addCustomExamplesToSwagger(document: any) {
     };
   }
 
-  // Example for Reschedule Event endpoint
   if (
     document.paths["/events/{id}/reschedule"] &&
     document.paths["/events/{id}/reschedule"].patch
@@ -170,54 +471,5 @@ function addCustomExamplesToSwagger(document: any) {
         },
       },
     };
-  }
-
-  addExamplesForStatusChangeEndpoints(document);
-}
-
-function addExamplesForStatusChangeEndpoints(document: any) {
-  // These endpoints don't have request bodies, but we can add descriptions
-  const statusEndpoints = [
-    "/events/{id}/submit-for-approval",
-    "/events/{id}/approve",
-    "/events/{id}/publish",
-    "/events/{id}/cancel",
-    "/events/{id}/postpone",
-  ];
-
-  statusEndpoints.forEach((endpoint) => {
-    if (document.paths[endpoint] && document.paths[endpoint].patch) {
-      // Add more detailed descriptions
-      document.paths[endpoint].patch.description =
-        getDetailedDescription(endpoint);
-
-      // Add parameter examples
-      if (document.paths[endpoint].patch.parameters) {
-        document.paths[endpoint].patch.parameters.forEach((param: any) => {
-          if (param.name === "id") {
-            param.example = "123e4567-e89b-12d3-a456-426614174000";
-            param.description = "The UUID of the event";
-          }
-        });
-      }
-    }
-  });
-}
-
-function getDetailedDescription(endpoint: string): string {
-  switch (endpoint) {
-    case "/events/{id}/submit-for-approval":
-      return "Submits a draft event for approval by an admin. The event status will change from DRAFT to PENDING_APPROVAL.";
-    case "/events/{id}/approve":
-      return "Approves an event that has been submitted for approval. The event status will change from PENDING_APPROVAL to APPROVED. Only admins can approve events.";
-    case "/events/{id}/publish":
-      return "Publishes an approved event, making it visible to the public. The event status will change from APPROVED to PUBLISHED. Only admins can publish events.";
-    case "/events/{id}/cancel":
-      return "Cancels an event. The event status will change to CANCELLED. Both organizers and admins can cancel events.";
-    case "/events/{id}/postpone":
-      return "Postpones a published event. The event status will change from PUBLISHED to POSTPONED. Both organizers and admins can postpone events.";
-
-    default:
-      return "Changes the status of an event.";
   }
 }
