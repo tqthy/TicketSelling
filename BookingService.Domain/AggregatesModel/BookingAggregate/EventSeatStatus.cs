@@ -122,6 +122,17 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
             return Status == SeatAvailabilityStatus.Available ||
                    (Status == SeatAvailabilityStatus.Reserved && ReservedUntil.HasValue && ReservedUntil.Value < currentTimeUtc);
         }
+        // Factory method for seeding or controlled updates
+        internal static EventSeatStatus CreateForSeeding(Guid eventId, Guid seatId, string status, DateTime? reservedUntil)
+        {
+            return new EventSeatStatus
+            {
+                EventId = eventId,
+                SeatId = seatId,
+                Status = status,
+                ReservedUntil = reservedUntil
+            };
+        }
     }
 
     /// <summary>
@@ -135,4 +146,6 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         public const string Sold = "Sold";
         // Add other statuses like "Locked", "Unavailable" if needed
     }
+    
+    
 }

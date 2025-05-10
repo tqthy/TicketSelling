@@ -1,15 +1,10 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Common.SeedWork;
 
-// Assuming BaseEntity exists for common properties like Id/DomainEvents
-// using Common.SeedWork; // Or define base types here
-
 namespace BookingService.Domain.AggregatesModel.BookingAggregate
 {
-    // Using BookingId as the primary identifier for the Aggregate Root
     public class Booking : BaseEntity<Guid>, IAggregateRoot
     {
         public Guid UserId { get; private set; }
@@ -82,6 +77,18 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
             }
         }
 
-        // Add other domain methods as needed...
+        // Internal method for seeding or controlled updates
+        internal static Booking CreateForSeeding(Guid userId, Guid eventId, decimal totalPrice, string status, DateTime? expiresAt)
+        {
+            return new Booking
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                EventId = eventId,
+                TotalPrice = totalPrice,
+                Status = status,
+                ExpiresAt = expiresAt
+            };
+        }
     }
 }
