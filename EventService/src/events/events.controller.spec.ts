@@ -91,9 +91,8 @@ describe("EventsController", () => {
         name: "Test Event",
         description: "Test Description",
         category: "MATCH",
-        date: "2025-04-22",
-        startTime: "19:30",
-        endTime: "22:30",
+        startDateTime: "2025-04-22T19:30:00",
+        endDateTime: "2025-04-22T22:30:00",
         venueId: "123",
         venueName: "Test Venue",
         venueAddress: "Test Address",
@@ -259,20 +258,15 @@ describe("EventsController", () => {
   describe("rescheduleEvent", () => {
     it("should reschedule an event", async () => {
       const rescheduleEventDto: RescheduleEventDto = {
-        date: "2025-04-29",
-        startTime: "19:30",
-        endTime: "22:30",
+        newStartDateTime: "2025-04-29T19:30:00",
+        newEndDateTime: "2025-04-29T22:30:00",
       };
 
       const rescheduledEvent = {
         ...mockEvent,
         status: EventStatus.RESCHEDULED,
-        startDateTime: new Date(
-          `${rescheduleEventDto.date}T${rescheduleEventDto.startTime}:00`
-        ),
-        endDateTime: new Date(
-          `${rescheduleEventDto.date}T${rescheduleEventDto.endTime}:00`
-        ),
+        startDateTime: new Date(rescheduleEventDto.newStartDateTime),
+        endDateTime: new Date(rescheduleEventDto.newEndDateTime),
       };
 
       jest

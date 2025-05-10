@@ -28,21 +28,17 @@ export class EventsService {
     organizerId: string
   ): Promise<Event> {
     this.logger.log(`Creating new event for organizer: ${organizerId}`);
-    const { sectionPricing, date, startTime, endTime, ...eventData } =
+    const { sectionPricing, startDateTime, endDateTime, ...eventData } =
       createEventDto;
-
-    const startDateTime = new Date(`${date}T${startTime}:00`);
-    const endDateTime = new Date(`${date}T${endTime}:00`);
 
     const event = this.eventRepository.create({
       ...eventData,
       organizerUserId: organizerId,
-      status: EventStatus.DRAFT, // default status
-      startDateTime,
-      endDateTime,
+      status: EventStatus.DRAFT,
+      startDateTime: new Date(startDateTime),
+      endDateTime: new Date(endDateTime),
     });
 
-    // save the event to get eventId
     const savedEvent = await this.eventRepository.save(event);
 
     const pricingEntities = sectionPricing.map((pricing) => {
@@ -177,10 +173,10 @@ export class EventsService {
         `Cannot reschedule event. Current status: ${event.status}. Only events in Postponed status can be rescheduled.`
       );
     }
-    const { date, startTime, endTime } = rescheduleEventDto;
-    const startDateTime = new Date(`${date}T${startTime}:00`);
-    const endDateTime = new Date(`${date}T${endTime}:00`);
 
+    const { newStartDateTime, newEndDateTime } = rescheduleEventDto;
+    const startDateTime = new Date(newStartDateTime);
+    const endDateTime = new Date(newEndDateTime);
     event.startDateTime = startDateTime;
     event.endDateTime = endDateTime;
     event.status = EventStatus.RESCHEDULED;
