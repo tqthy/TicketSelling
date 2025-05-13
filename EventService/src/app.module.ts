@@ -6,9 +6,9 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { EventsModule } from "./events/events.module";
 import { Event } from "./events/entities/event.entity";
 import { EventSectionPricing } from "./events/entities/event-section-pricing.entity";
-import { JwtModule } from "@nestjs/jwt";
 import { AuthModule } from "./auth/auth.module";
 import { HealthModule } from "./health/health.module";
+import { MessagingModule } from "./messaging/messaging.module";
 
 @Module({
   imports: [
@@ -35,6 +35,7 @@ import { HealthModule } from "./health/health.module";
     EventsModule,
     AuthModule,
     HealthModule,
+    MessagingModule,
   ],
 })
 export class AppModule {

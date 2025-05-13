@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-  BadRequestException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { LoggerService } from "../common/services/logger.service";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -12,6 +12,8 @@ import { EventSectionPricing } from "./entities/event-section-pricing.entity";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { RescheduleEventDto } from "./dto/reschedule-event.dto";
+import { EventApprovedProducer } from "../messaging/producers/event-approved.producer";
+import { VenueService } from "../venue/venue.service";
 
 @Injectable()
 export class EventsService {
@@ -20,7 +22,9 @@ export class EventsService {
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
     @InjectRepository(EventSectionPricing)
-    private readonly eventSectionPricingRepository: Repository<EventSectionPricing>
+    private readonly eventSectionPricingRepository: Repository<EventSectionPricing>,
+    private readonly eventApprovedProducer: EventApprovedProducer,
+    private readonly venueService: VenueService
   ) {}
 
   async create(
@@ -115,7 +119,44 @@ export class EventsService {
     }
 
     event.status = EventStatus.PUBLISHED;
-    return this.eventRepository.save(event);
+    const savedEvent = await this.eventRepository.save(event);
+
+    try {
+      const seatIds = await this.getSeatIdsForEvent(event.venueId);
+
+      await this.eventApprovedProducer.publishEventApproved(
+        event.eventId,
+        event.venueId,
+        seatIds
+      );
+
+      this.logger.log(
+        `Published EventApproved message for event ${event.eventId}`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish EventApproved message for event ${event.eventId}`,
+        error
+      );
+      throw new InternalServerErrorException(
+        `Failed to publish EventApproved message: ${error.message}`
+      );
+    }
+
+    return savedEvent;
+  }
+
+  private async getSeatIdsForEvent(venueId: string): Promise<string[]> {
+    this.logger.log(`Getting all seat IDs for venue ${venueId}`);
+
+    try {
+      const seatIds = await this.venueService.getAllSeatsByVenue(venueId);
+
+      this.logger.log(`Retrieved ${seatIds.length} seat IDs from VenueService`);
+      return seatIds;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async submitForApproval(id: string): Promise<Event> {
