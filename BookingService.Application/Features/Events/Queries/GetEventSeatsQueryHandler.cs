@@ -32,7 +32,7 @@ namespace BookingService.Application.Features.Events.Queries
             _logger = logger;
         }
 
-        public async Task<List<EventSeatDetailDto>> Handle(GetEventSeatsQuery request, CancellationToken cancellationToken)
+        public async Task<List<EventSeatDetailDto>> Handle(GetEventSeatsQuery request, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Fetching available seats for EventId: {EventId}", request.EventId);
 
