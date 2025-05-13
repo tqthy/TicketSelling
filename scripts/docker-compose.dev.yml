@@ -28,6 +28,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
+    depends_on:
+      - rabbitmq
     networks:
       - backend-net
   userservice:
@@ -41,16 +43,28 @@ services:
       ASPNETCORE_URLS: http://+:8082
     networks:
       - backend-net
-#  venueservice:
-#    build:
-#      context: ../
-#      dockerfile: ./VenueService/Dockerfile
-#    environment:
-#      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
-#      AspNetCore__Environment: Development
-#      ASPNETCORE_URLS: http://+:8083
-#    networks:
-#      - backend-net
+  venueservice:
+    build:
+      context: ../
+      dockerfile: ./VenueService/Dockerfile
+    environment:
+      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8083
+    networks:
+      - backend-net
+  bookingservice:
+    build:
+      context: ../
+      dockerfile: ./BookingService.Api/Dockerfile
+    environment:
+      ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8084
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host

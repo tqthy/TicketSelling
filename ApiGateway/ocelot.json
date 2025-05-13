@@ -57,6 +57,27 @@
         "X-User-Id": "Claims[sub] > value",
         "X-User-Roles": "Claims[role] > value"
       }
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "bookingservice",
+          "Port": 8084
+        }
+      ],
+      "UpstreamPathTemplate": "/api/bookings/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+
+      "AddHeadersToRequest": {
+        "X-User-Id": "Claims[sub] > value",
+        "X-User-Roles": "Claims[role] > value"
+      }
     }
   ],
   "GlobalConfiguration": {
