@@ -14,7 +14,7 @@ public class GetMyBookingsQueryHandler : IRequestHandler<GetMyBookingsQuery, Lis
         _bookingRepository = bookingRepository;
     }
 
-    public async Task<List<BookingDto>> Handle(GetMyBookingsQuery request, CancellationToken cancellationToken)
+    public async Task<List<BookingDto>> Handle(GetMyBookingsQuery request, CancellationToken cancellationToken = default)
     {
         var bookings = await _bookingRepository.GetBookingsByUserIdAsync(request.UserId, cancellationToken);
         

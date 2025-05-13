@@ -18,11 +18,9 @@ namespace BookingService.Application.Features.Bookings.Commands
 {
 
     // Define a result object for better handling in API layer
-    public class BookingResult
+    public class BookingResult : Result
     {
-        public bool Success { get; set; }
         public BookingResponse? BookingDetails { get; set; }
-        public string? ErrorMessage { get; set; }
         public bool IsConflict { get; set; } // Flag for 409 Conflict
     }
 
@@ -53,7 +51,7 @@ namespace BookingService.Application.Features.Bookings.Commands
             _logger = logger;
         }
 
-        public async Task<BookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
+        public async Task<BookingResult> Handle(CreateBookingCommand request, CancellationToken cancellationToken = default)
         {
             // --- Use DbContext transaction for atomicity ---
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);

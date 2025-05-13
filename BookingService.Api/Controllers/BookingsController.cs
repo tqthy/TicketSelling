@@ -26,6 +26,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "User")]
     [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -55,8 +56,7 @@ public class BookingsController : ControllerBase
         // Handle result from Application layer
         if (result.Success && result.BookingDetails != null)
         {
-            // Use nameof(GetBookingById) assuming you'll create that query/endpoint
-            return CreatedAtAction("GetBookingById_Placeholder", new { bookingId = result.BookingDetails.BookingId }, result.BookingDetails);
+            return CreatedAtAction(nameof(GetBookingById), new { bookingId = result.BookingDetails.BookingId }, result.BookingDetails);
         }
         else if (result.IsConflict)
         {
@@ -79,12 +79,13 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("my-bookings")]
-    [ProducesResponseType(typeof(List<BookingDetailDto>), StatusCodes.Status200OK)]
+    [Authorize(Roles = "User")]
+    [ProducesResponseType(typeof(List<BookingDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyBookings()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-         if (!Guid.TryParse(userIdString, out var userId))
+        if (!Guid.TryParse(userIdString, out var userId))
         {
             return Unauthorized(new { message = "Invalid user identifier." });
         }
@@ -98,12 +99,33 @@ public class BookingsController : ControllerBase
     }
 
      // Placeholder for GET by ID route name used in CreatedAtAction
-    [HttpGet("{bookingId}", Name = "GetBookingById_Placeholder")]
-    [AllowAnonymous] // Or Authorize if needed
-     public IActionResult GetBookingById_Placeholder(Guid bookingId)
+    [HttpGet("{bookingId}")]
+    [Authorize(Roles = "User,Admin")]
+    [ProducesResponseType(typeof(BookingDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+     public async Task<IActionResult> GetBookingById(Guid bookingId)
     {
-        // Implementation using a GetBookingByIdQuery would go here
-        return Ok($"Placeholder for booking {bookingId}");
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized(new { message = "Invalid user identifier." });
+        }
+        
+        var query = new GetBookingByIdQuery { BookingId = bookingId, UserId = userId };
+        _logger.LogInformation("Dispatching GetBookingByIdQuery for Booking {BookingId} and User {UserId}", bookingId, userId);
+        
+        var result = await _mediator.Send(query);
+        if (result.Success) return Ok(result.Booking);
+        if (result.ErrorMessage?.Contains("Unauthorized") ?? false)
+        {
+            return Unauthorized(new { message = result.ErrorMessage });
+        }
+        if (result.ErrorMessage?.Contains("not found") ?? false)
+        {
+            return NotFound(new { message = result.ErrorMessage });
+        }
+        _logger.LogError("Booking command failed: {ErrorMessage}", result.ErrorMessage);
+        return StatusCode(StatusCodes.Status500InternalServerError, new { message = result.ErrorMessage });
     }
 }
 

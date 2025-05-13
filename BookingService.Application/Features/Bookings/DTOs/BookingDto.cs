@@ -6,5 +6,6 @@ public class BookingDto
     public string EventId { get; set; } = string.Empty;
     public decimal TotalPrice { get; set; }
     public string Status { get; set; } = string.Empty;
-    public DateTime ExpiresAt { get; set; }
+    public string? UserId { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 }
