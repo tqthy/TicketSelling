@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'ticketbooking_services'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['eventservice:8081']
+        labels:
+          service: 'event_service'
+      # - targets: ['userservice:8082']
+      #   labels:
+      #     service: 'user_service'
+      # - targets: ['apigateway:8080']
+      #   labels:
+      #     service: 'api_gateway'
+
