@@ -3,22 +3,7 @@ import { HttpService } from "@nestjs/axios";
 import { LoggerService } from "../common/services/logger.service";
 import { catchError, lastValueFrom, map } from "rxjs";
 import { AxiosError } from "axios";
-
-// public class SeatDto
-// {
-//     public Guid SeatId { get; set; }
-//     public Guid SectionId { get; set; } // Include SectionId for context
-//     public string SeatNumber { get; set; }
-//     public string RowNumber { get; set; }
-//     public int? SeatInRow { get; set; }
-// }
-interface SeatDto {
-  seatId: string;
-  sectionId: string;
-  seatNumber: string;
-  rowNumber: string;
-  seatInRow: number | null;
-}
+import { SeatDto } from "./dto/seat.dto";
 
 @Injectable()
 export class VenueService {

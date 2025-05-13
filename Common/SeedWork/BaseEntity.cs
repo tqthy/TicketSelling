@@ -126,13 +126,13 @@ namespace Common.SeedWork
         /// <summary>
         /// Compares this entity with another entity of the same type for equality.
         /// </summary>
-        public bool Equals(BaseEntity<TId> other)
+        public bool Equals(BaseEntity<TId>? other)
         {
             return Equals((object)other);
         }
 
         // Operator overloads for equality comparison
-        public static bool operator ==(BaseEntity<TId> left, BaseEntity<TId> right)
+        public static bool operator ==(BaseEntity<TId>? left, BaseEntity<TId>? right)
         {
             // Handles null checks correctly
             if (Equals(left, null))

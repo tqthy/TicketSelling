@@ -19,6 +19,10 @@ services:
       context: ../EventService
       dockerfile: ./Dockerfile
     environment:
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      # RABBITMQ_PORT: ${RABBITMQ_PORT}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USERNAME: ${DB_USERNAME}
@@ -28,6 +32,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
+    depends_on:
+      - rabbitmq
     networks:
       - backend-net
   userservice:
@@ -41,16 +47,28 @@ services:
       ASPNETCORE_URLS: http://+:8082
     networks:
       - backend-net
-#  venueservice:
-#    build:
-#      context: ../
-#      dockerfile: ./VenueService/Dockerfile
-#    environment:
-#      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
-#      AspNetCore__Environment: Development
-#      ASPNETCORE_URLS: http://+:8083
-#    networks:
-#      - backend-net
+  venueservice:
+    build:
+      context: ../
+      dockerfile: ./VenueService/Dockerfile
+    environment:
+      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8083
+    networks:
+      - backend-net
+  bookingservice:
+    build:
+      context: ../
+      dockerfile: ./BookingService.Api/Dockerfile
+    environment:
+      ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
+      AspNetCore__Environment: Development
+      ASPNETCORE_URLS: http://+:8084
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host
@@ -65,68 +83,11 @@ services:
     networks:
       - backend-net
 
-  # Logging - Elasticsearch (Data Store)
-  #  elasticsearch:
-  #    image: elasticsearch:7.17.10 # Match ELK stack versions
-  #    environment:
-  #      - discovery.type=single-node # Simple setup for one node
-  #      - bootstrap.memory_lock=true # Recommended for performance
-  #      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Adjust heap size as needed
-  #    ulimits: # Required by Elasticsearch
-  #      memlock:
-  #        soft: -1
-  #        hard: -1
-  #    volumes:
-  #      - /data/es_data:/usr/share/elasticsearch/data # Persist data
-  #    networks:
-  #      - backend-net
-  #    ports:
-  #      - "9200:9200" # API port
-  #    # Healthcheck helps ensure ES is ready before dependent services fully start actions
-  #    healthcheck:
-  #      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
-  #      interval: 30s
-  #      timeout: 10s
-  #      retries: 5
-
-  # Logging - Logstash (Processor)
-  #  logstash:
-  #    image: logstash:7.17.10 # Match ELK stack versions
-  #    # Add user: root if Logstash needs to bind to privileged ports (<1024)
-  #    # user: root
-  #    ports:
-  #      # Example: Port for Beats input (if used)
-  #      # - "5044:5044"
-  #      # Example: Port for TCP/UDP input (configure in logstash.conf)
-  #      - "5000:5000/tcp"
-  #      - "5000:5000/udp"
-  #    environment:
-  #      LS_JAVA_OPTS: "-Xms256m -Xmx256m" # Adjust heap size
-  #      # Add other necessary environment variables
-  #    volumes:
-  #      # Mount the pipeline configuration
-  #      - /data/logstash_pipeline:/usr/share/logstash/pipeline/
-  #    configs:
-  #      # Source points to the Docker config name, target is where it appears in container
-  #      - source: logstash_config
-  #        target: /usr/share/logstash/pipeline/logstash.conf
-  #    networks:
-  #      - backend-net
-
-  # Logging - Kibana (UI)
-  #  kibana:
-  #    image: kibana:7.17.10 # Match ELK stack versions
-  #    ports:
-  #      - "5601:5601" # Kibana UI port
-  #    environment:
-  #      ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
-  #    networks:
-  #      - backend-net
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     environment:
       - discovery.type=single-node
-#      - xpack.security.enabled=false
+    #      - xpack.security.enabled=false
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data
     ports:
@@ -173,6 +134,31 @@ services:
   #    networks:
   #      - backend-net
 
+  # Monitoring - Prometheus (Data Store & Scraper)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Monitoring - Grafana (UI)
   #  grafana:
   #    image: grafana/grafana:9.5.3 # Use a specific version
@@ -180,6 +166,66 @@ services:
   #      - "3000:3000" # Grafana UI port
   #    volumes:
   #      - /data/grafana_data:/var/lib/grafana
+  grafana:
+    image: grafana/grafana:9.5.3
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - backend-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  #node_exporter scrapes host-level metrics on 9100
+  node_exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: node_exporter
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - backend-net
+    restart: unless-stopped
+
+  #cadvisor for monitoring container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    ports: # Map port 8080 with 8085 to avoid conflict with api gateway
+      - "8085:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - backend-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
 
 networks:
   backend-net:

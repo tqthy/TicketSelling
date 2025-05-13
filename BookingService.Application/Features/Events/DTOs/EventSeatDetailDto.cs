@@ -8,5 +8,5 @@ public class EventSeatDetailDto
     public string? Row { get; set; }
     public string? SectionName { get; set; }
     public string Status { get; set; }
-    // public string SectionId { get; set; } 
+    public string SectionId { get; set; } 
 }

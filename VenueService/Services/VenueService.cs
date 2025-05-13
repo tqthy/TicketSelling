@@ -332,6 +332,36 @@ namespace VenueService.Services
             }
         }
 
+        public async Task<List<SeatDto>> GetSeatsForVenueAsync(Guid venueId)
+        {
+            // Check if the venue exists
+            var venueExists = _context.Venues.Any(v => v.VenueId == venueId);
+            if (!venueExists)
+            {
+                _logger.LogWarning("Venue with ID {VenueId} not found when trying to get seats.", venueId);
+                throw new Exception("Venue not found.");
+            }
+            
+            List<SeatDto> seats = [];
+            
+            // Fetch seats for the venue    
+            // Using AsNoTracking for read-only queries
+            seats = await _context.Seats
+                .Where(s => s.Section.VenueId == venueId)
+                .Select(s => new SeatDto
+                {
+                    SeatId = s.SeatId,
+                    SectionId = s.SectionId,
+                    SeatNumber = s.SeatNumber,
+                    RowNumber = s.RowNumber,
+                    SeatInRow = s.SeatInRow
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            return seats;
+        }
+
         // Helper mapping method 
         private SectionDto MapSectionToDto(Section section, bool includeSeats)
         {

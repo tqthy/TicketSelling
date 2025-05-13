@@ -12,15 +12,13 @@ import { EventApprovedProducer } from "./producers/event-approved.producer";
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [
-              `amqp://${configService.get("RABBITMQ_USER", "user")}:${configService.get(
-                "RABBITMQ_PASSWORD",
-                "user123"
-              )}@${configService.get("RABBITMQ_HOST", "rabbitmq")}:${configService.get(
-                "RABBITMQ_PORT",
-                "5672"
-              )}`,
-            ],
+            // urls: [
+            //   `amqp://${configService.get("RABBITMQ_USER", "guest")}:${configService.get(
+            //     "RABBITMQ_PASSWORD",
+            //     "guest"
+            //   )}@${configService.get("RABBITMQ_HOST", "localhost")}:5672`,
+            // ],
+            urls: [`amqp://guest:guest@localhost:5672`],
             queue: "event_service_queue",
             queueOptions: {
               durable: true,

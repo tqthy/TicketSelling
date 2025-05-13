@@ -8,7 +8,10 @@ import { VenueService } from "./venue.service";
     HttpModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        baseURL: configService.get("http://localhost:5110"),
+        baseURL: configService.get(
+          "VENUE_SERVICE_URL",
+          "http://localhost:5110"
+        ),
         timeout: 5000,
         maxRedirects: 5,
         headers: {

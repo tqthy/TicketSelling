@@ -1,6 +1,4 @@
 import { Module, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
-import { RequestValidationMiddleware } from "./common/middleware/request-validation.middleware";
-import { TestUserInjectionMiddleware } from "./common/middleware/test-user-injection.middleware";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EventsModule } from "./events/events.module";
@@ -8,6 +6,10 @@ import { Event } from "./events/entities/event.entity";
 import { EventSectionPricing } from "./events/entities/event-section-pricing.entity";
 import { AuthModule } from "./auth/auth.module";
 import { HealthModule } from "./health/health.module";
+import { MetricsModule } from "./metrics/metrics.module";
+import { RequestValidationMiddleware } from "./common/middleware/request-validation.middleware";
+import { TestUserInjectionMiddleware } from "./common/middleware/test-user-injection.middleware";
+import { MetricsInterceptor } from "./metrics/metrics.interceptor";
 import { MessagingModule } from "./messaging/messaging.module";
 
 @Module({
@@ -32,16 +34,19 @@ import { MessagingModule } from "./messaging/messaging.module";
         },
       }),
     }),
+    MetricsModule,
     EventsModule,
     AuthModule,
     HealthModule,
     MessagingModule,
   ],
+  providers: [MetricsInterceptor],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TestUserInjectionMiddleware, RequestValidationMiddleware)
+      .exclude("metrics")
       .forRoutes({ path: "*", method: RequestMethod.ALL });
   }
 }

@@ -122,12 +122,12 @@ export class EventsService {
     const savedEvent = await this.eventRepository.save(event);
 
     try {
-      const seatIds = await this.getSeatIdsForEvent(event.venueId);
+      // const seats = await this.venueService.getAllSeatsByVenue(event.eventId);
 
       await this.eventApprovedProducer.publishEventApproved(
         event.eventId,
         event.venueId,
-        seatIds
+        []
       );
 
       this.logger.log(
@@ -144,19 +144,6 @@ export class EventsService {
     }
 
     return savedEvent;
-  }
-
-  private async getSeatIdsForEvent(venueId: string): Promise<string[]> {
-    this.logger.log(`Getting all seat IDs for venue ${venueId}`);
-
-    try {
-      const seatIds = await this.venueService.getAllSeatsByVenue(venueId);
-
-      this.logger.log(`Retrieved ${seatIds.length} seat IDs from VenueService`);
-      return seatIds;
-    } catch (error) {
-      throw error;
-    }
   }
 
   async submitForApproval(id: string): Promise<Event> {

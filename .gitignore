@@ -7,3 +7,4 @@ riderModule.iml
 .env
 ./data/
 elasticsearch-data/
+data/

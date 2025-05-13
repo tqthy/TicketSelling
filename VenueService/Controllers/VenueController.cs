@@ -130,9 +130,31 @@ namespace VenueService.Controllers
 
             return NoContent(); // Return 204 on successful deletion
         }
-        
-        
-        
+
+        [HttpGet("{venueId}/seats/")]
+        [ProducesResponseType(typeof(IEnumerable<SeatDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<SeatDto>>> GetSeatsForVenueAsync(Guid venueId)
+        {
+            try
+            {
+                var seats = await _venueService.GetSeatsForVenueAsync(venueId);
+
+                if (!seats.Any())
+                {
+                    return NotFound($"No seats found for venue with ID {venueId}.");
+                }
+                return Ok(seats);
+            } catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching seats for venue {VenueId}.", venueId);
+                if (ex.Message == "Venue not found")
+                {
+                    return NotFound($"Venue with ID {venueId} not found.");
+                }
+                return StatusCode(StatusCodes.Status500InternalServerError, "An internal error occurred.");
+            }
+        }
 
     }
 }
