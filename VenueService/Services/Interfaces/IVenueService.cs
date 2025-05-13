@@ -76,5 +76,7 @@ namespace VenueService.Services.Interfaces
         /// <param name="sectionId">The ID of the section to delete.</param>
         /// <returns>True if deletion was successful, false if not found or venue mismatch.</returns>
         Task<bool> DeleteSectionAsync(Guid venueId, Guid sectionId);
+
+        Task<List<SeatDto>> GetSeatsForVenueAsync(Guid venueId);
     }
 }
