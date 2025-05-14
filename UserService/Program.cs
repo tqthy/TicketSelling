@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Data;
+using UserService.Mappings;
 using UserService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,9 +35,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders(); // Needed for things like password reset tokens
 
+// Config AutoMapper
+builder.Services.AddAutoMapper(typeof(UserProfile).Assembly);
 
-
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.SuppressAsyncSuffixInActionNames = false;
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

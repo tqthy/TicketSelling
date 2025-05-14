@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Data;
@@ -8,22 +9,19 @@ using UserService.Models;
 
 namespace UserService.Services;
 
-public class UserService : IUserService
+public class UserService(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    IConfiguration configuration,
+    IMapper mapper)
+    : IUserService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager; // Often used for login, but we'll manually check password here for JWT generation
-    private readonly IConfiguration _configuration;
-
-    public UserService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _configuration = configuration;
-    }
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager; // Often used for login, but we'll manually check password here for JWT generation
+    private readonly IMapper _mapper = mapper;
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
     {
-        var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+        var existingUser = await userManager.FindByEmailAsync(registerDto.Email);
         if (existingUser != null)
         {
             return new AuthResponseDto { IsSuccess = false, Message = "User already exists with this email." };
@@ -37,8 +35,8 @@ public class UserService : IUserService
         };
 
         // Creates the user in the database
-        var result = await _userManager.CreateAsync(newUser, registerDto.Password);
-
+        var result = await userManager.CreateAsync(newUser, registerDto.Password);
+        
         if (!result.Succeeded)
         {
             // Collect errors
@@ -47,22 +45,22 @@ public class UserService : IUserService
         }
         
 
-        await _userManager.AddToRoleAsync(newUser, registerDto.Role.ToString()); // Add user to role
+        await userManager.AddToRoleAsync(newUser, registerDto.Role.ToString()); // Add user to role
         
-        return new AuthResponseDto { IsSuccess = true, Message = "User registered successfully." };
+        return new AuthResponseDto { IsSuccess = true, Message = "User registered successfully.", UserId =  newUser.Id };
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
         // Find the user by email
-        var user = await _userManager.FindByEmailAsync(loginDto.Email);
+        var user = await userManager.FindByEmailAsync(loginDto.Email);
         if (user == null)
         {
             return new AuthResponseDto { IsSuccess = false, Message = "Invalid email or password." };
         }
 
         // Check the password
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+        var isPasswordValid = await userManager.CheckPasswordAsync(user, loginDto.Password);
         if (!isPasswordValid)
         {
             return new AuthResponseDto { IsSuccess = false, Message = "Invalid email or password." };
@@ -70,7 +68,7 @@ public class UserService : IUserService
 
         // ** If password is valid, generate JWT token **
         var tokenHandler = new JwtSecurityTokenHandler();
-        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var jwtSettings = configuration.GetSection("JwtSettings");
         var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not found."));
 
         // Define token expiration (e.g., 1 hour)
@@ -84,7 +82,7 @@ public class UserService : IUserService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique token identifier
         };
         
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
         
         // Create the security token descriptor
@@ -111,5 +109,60 @@ public class UserService : IUserService
             Expiration = tokenDescriptor.Expires
         };
     }
-    
+
+    public async Task<List<UserDto>> GetAllUsersAsync()
+    {
+        try
+        {
+            return await Task.FromResult(userManager.Users.Select(user => _mapper.Map<UserDto>(user)).ToList());
+        }
+        catch (Exception ex)
+        {
+            return [];
+        }
+    }
+
+    public async Task<UserDto?> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto)
+    {
+        // Find the user by ID
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+        {
+            return null; // User not found
+        }
+        // Map the updated properties
+        _mapper.Map(updateUserDto, user);
+        // Update the user in the database
+        var result = await userManager.UpdateAsync(user);
+        if (result.Succeeded) return _mapper.Map<UserDto>(user);
+        // Handle errors
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        throw new Exception($"User update failed: {errors}");
+    }
+
+    public async Task<bool> DeleteUserAsync(Guid id)
+    {
+    // Find the user by ID
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+        {
+            return await Task.FromResult(false); // User not found
+        }
+        // Delete the user from the database
+        var result = await userManager.DeleteAsync(user);
+        return await Task.FromResult(result.Succeeded);
+    }
+
+    public Task<UserDto?> GetUserByIdAsync(Guid id)
+    {
+        // Find the user by ID
+        var user = userManager.Users.FirstOrDefault(u => u.Id == id.ToString());
+        if (user == null)
+        {
+            return Task.FromResult<UserDto?>(null); // User not found
+        }
+        // Map the user to UserDto
+        var userDto = _mapper.Map<UserDto>(user);
+        return Task.FromResult(userDto)!;
+    }
 }

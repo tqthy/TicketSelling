@@ -6,4 +6,5 @@ public class AuthResponseDto
     public string? Message { get; set; }
     public string? Token { get; set; } // The JWT
     public DateTime? Expiration { get; set; } // When the token expires
+    public string UserId { get; set; } = string.Empty; // The ID of the user
 }

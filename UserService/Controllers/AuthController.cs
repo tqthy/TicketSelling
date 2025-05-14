@@ -31,9 +31,10 @@ public class AuthController : ControllerBase
             return BadRequest(new { result.Message }); // Return error message
         }
 
-        // Return 200 OK for registration, maybe with the success message
-        // Avoid returning sensitive info like password hashes etc.
-        return Ok(new { result.Message });
+        // Return 201 created for registration, maybe with the success message
+        var createdUserRouteName = nameof(UserController.GetUserByIdAsync);
+        return CreatedAtAction(createdUserRouteName,
+            new { id = result.UserId }, new { result.Message });
     }
 
     [HttpPost("login")] // Route: POST api/auth/login
