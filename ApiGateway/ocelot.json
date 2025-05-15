@@ -31,8 +31,8 @@
       },
 
       "AddHeadersToRequest": {
-        "X-User-Id": "Claims[sub] > value",
-        "X-User-Roles": "Claims[role] > value"
+        "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
       }
     },
     {
@@ -54,8 +54,8 @@
       },
 
       "AddHeadersToRequest": {
-        "X-User-Id": "Claims[sub] > value",
-        "X-User-Roles": "Claims[role] > value"
+        "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
       }
     },
     {
@@ -75,8 +75,8 @@
       },
 
       "AddHeadersToRequest": {
-        "X-User-Id": "Claims[sub] > value",
-        "X-User-Roles": "Claims[role] > value"
+        "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
       }
     }
   ],

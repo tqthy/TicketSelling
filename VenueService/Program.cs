@@ -14,12 +14,12 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog for ASP.NET Core host
-builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration) // Also requires the package
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext()
+// builder.Host.UseSerilog((context, services, configuration) => configuration
+//         .ReadFrom.Configuration(context.Configuration) // Also requires the package
+//         .ReadFrom.Services(services)
+//         .Enrich.FromLogContext()
     // ... other Serilog config ...
-);
+// );
 
 // Add services to the container.
 
@@ -51,7 +51,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseSerilogRequestLogging();
+// app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 

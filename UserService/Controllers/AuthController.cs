@@ -32,9 +32,7 @@ public class AuthController : ControllerBase
         }
 
         // Return 201 created for registration, maybe with the success message
-        var createdUserRouteName = nameof(UserController.GetUserByIdAsync);
-        return CreatedAtAction(createdUserRouteName,
-            new { id = result.UserId }, new { result.Message });
+        return CreatedAtAction("GetUserByIdAsync", "User", new { id = result.UserId }, new { result.Message });
     }
 
     [HttpPost("login")] // Route: POST api/auth/login

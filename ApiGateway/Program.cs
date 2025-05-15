@@ -21,6 +21,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not found."))),
         };
+        options.ClaimsIssuer = builder.Configuration["JwtSettings:Issuer"];
     });
 
 builder.Services.AddOcelot(builder.Configuration);
@@ -42,6 +43,28 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>(); // Or a more specific logger category
+    logger.LogWarning("--- CUSTOM AUTH DEBUG ---");
+    if (context.User.Identity != null)
+    {
+        logger.LogWarning($"User.Identity.IsAuthenticated: {context.User.Identity.IsAuthenticated}");
+        logger.LogWarning($"User.Identity.AuthenticationType: {context.User.Identity.AuthenticationType}");
+        logger.LogWarning("User.Claims:");
+        foreach (var claim in context.User.Claims)
+        {
+            logger.LogWarning($"  - Type: {claim.Type}, Value: {claim.Value}, Issuer: {claim.Issuer}");
+        }
+    }
+    else
+    {
+        logger.LogWarning("User.Identity IS NULL");
+    }
+    logger.LogWarning("--- END CUSTOM AUTH DEBUG ---");
+    await next(context);
+});
 
 app.MapControllers();
 
