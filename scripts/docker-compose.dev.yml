@@ -57,10 +57,11 @@ services:
       dockerfile: ./VenueService/Dockerfile
     environment:
       ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
-      AspNetCore__Environment: Development
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8083
     depends_on:
-      - logstash
+      logstash:
+        condition: service_healthy
     networks:
       - backend-net
   bookingservice:
@@ -123,7 +124,13 @@ services:
         condition: service_healthy
     environment:
       LS_JAVA_OPTS: "-Xms256m -Xmx256m"
-
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1" ]
+      interval: 10s       # Check every 10 seconds
+      timeout: 5s         # Wait up to 5 seconds for a response
+      retries: 12         # Retry 12 times (total 2 minutes of retries after start_period)
+      start_period: 60s
+  
   kibana:
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     environment:

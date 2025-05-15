@@ -28,6 +28,7 @@ namespace VenueService.Controllers
         [ProducesResponseType(typeof(IEnumerable<VenueDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<VenueDto>>> GetAllVenuesAsync()
         {
+            _logger.LogInformation("Getting all Venues");
             var venues = await _venueService.GetAllVenuesAsync();
             return Ok(venues); // Simply return the result from the service
         }
