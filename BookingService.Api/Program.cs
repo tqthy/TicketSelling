@@ -1,9 +1,11 @@
 using BookingService.Api.Middleware;
 using BookingService.Application.Contracts.Infrastructure;
 using BookingService.Application.Features.Bookings.Commands;
+using BookingService.Application.IntegrationEventHandlers;
 using BookingService.Domain.AggregatesModel.BookingAggregate;
 using BookingService.Infrastructure.Data;
 using BookingService.Infrastructure.Repositories;
+using Common.Messages;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,14 +46,35 @@ builder.Services.AddScoped<IEventSeatStatusRepository, EventSeatStatusRepository
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<EventApprovedConsumer>();
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("rabbitmq", "/", h =>
+        var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
+        var host = rabbitMqConfig.GetValue<string>("Host", "rabbitmq");
+        var username = rabbitMqConfig.GetValue<string>("Username", "guest"); 
+        var password = rabbitMqConfig.GetValue<string>("Password", "guest");
+        
+        cfg.Host(host, "/", h => 
         {
-            h.Username("user");
-            h.Password("user123");
+            h.Username(username!);
+            h.Password(password!);
         });
-        cfg.ConfigureEndpoints(context);
+        
+        cfg.Message<EventApproved>(m => m.SetEntityName("event-approved"));
+        
+        cfg.ReceiveEndpoint("booking-service.event", e => // Kebab-case queue name
+        {
+            e.ConfigureConsumer<EventApprovedConsumer>(context);
+            
+            e.UseMessageRetry(r => r.Intervals(
+                TimeSpan.FromMilliseconds(500),
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromSeconds(10)
+            ));
+            
+            e.UseInMemoryOutbox(context); 
+        });
     });
 });
 

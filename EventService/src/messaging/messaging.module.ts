@@ -7,22 +7,22 @@ import { EventApprovedProducer } from "./producers/event-approved.producer";
   imports: [
     ClientsModule.registerAsync([
       {
-        name: "RABBITMQ_CLIENT",
-        imports: [ConfigModule],
+        name: "RABBITMQ_CLIENT", 
+        imports: [ConfigModule], 
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            // urls: [
-            //   `amqp://${configService.get("RABBITMQ_USER", "guest")}:${configService.get(
-            //     "RABBITMQ_PASSWORD",
-            //     "guest"
-            //   )}@${configService.get("RABBITMQ_HOST", "localhost")}:5672`,
-            // ],
-            urls: [`amqp://guest:guest@localhost:5672`],
-            queue: "event_service_queue",
-            queueOptions: {
-              durable: true,
-            },
+            urls: [
+              `amqp://${configService.get(
+                  "RABBITMQ_USER",
+                  "guest"
+              )}:${configService.get(
+                  "RABBITMQ_PASSWORD",
+                  "guest"
+              )}@${configService.get("RABBITMQ_HOST", "localhost")}:5672`,
+            ],
+            exchange: "event-approved", 
+            exchangeType: "fanout",
           },
         }),
         inject: [ConfigService],
