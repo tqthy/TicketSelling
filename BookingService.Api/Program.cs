@@ -46,7 +46,13 @@ builder.Services.AddScoped<IEventSeatStatusRepository, EventSeatStatusRepository
 
 builder.Services.AddMassTransit(x =>
 {
+    // x.AddEntityFrameworkOutbox<BookingDbContext>(o => // If using EF outbox
+    // {
+    //     o.UsePostgres(); // Or your DB
+    //     o.UseBusOutbox();
+    // });
     x.AddConsumer<EventApprovedConsumer>();
+    
     x.UsingRabbitMq((context, cfg) =>
     {
         var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
@@ -75,6 +81,8 @@ builder.Services.AddMassTransit(x =>
             
             e.UseInMemoryOutbox(context); 
         });
+        
+        cfg.Message<InitiatePaymentRequested>(m => m.SetEntityName("payment-initiation-requests")); // Explicit exchange name
     });
 });
 

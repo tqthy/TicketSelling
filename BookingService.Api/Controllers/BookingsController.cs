@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 // Reference DTOs/Commands/Queries from Application or Common layer
@@ -46,13 +47,28 @@ public class BookingsController : ControllerBase
         {
             return Unauthorized(new { message = "Invalid user identifier." });
         }
+        
+        var ipAddress = "127.0.0.1";
+        var remoteIp = HttpContext.Connection.RemoteIpAddress;
+        
+        
+        if (remoteIp != null)
+        {
+            if (remoteIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                remoteIp = Dns.GetHostEntry(remoteIp).AddressList.FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+            }
 
+            ipAddress = remoteIp != null ? remoteIp.ToString() : "127.0.0.1";
+        }
+        
         // Map API request DTO to Application Command
         var command = new CreateBookingCommand
         {
             EventId = apiRequest.EventId,
             SeatId = apiRequest.SeatId,
-            UserId = userId
+            UserId = userId,
+            UserIpAddress = ipAddress 
         };
 
         _logger.LogInformation("Dispatching CreateBookingCommand for User {UserId}", userId);
