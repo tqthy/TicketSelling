@@ -118,11 +118,11 @@ export class EventsService {
       );
     }
 
-    event.status = EventStatus.PUBLISHED;
+    // event.status = EventStatus.PUBLISHED;
     const savedEvent = await this.eventRepository.save(event);
 
     try {
-      // const seats = await this.venueService.getAllSeatsByVenue(event.eventId);
+      // const seats = await this.venueService.getAllSeatsByVenue(event.venueId);
 
       await this.eventApprovedProducer.publishEventApproved(
         event.eventId,
