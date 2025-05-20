@@ -108,16 +108,20 @@ namespace BookingService.Application.Features.Bookings.Commands
                     _logger.LogInformation("Booking {BookingId} initiated successfully.", booking.Id);
 
                     // 9. Publish Integration Event (AFTER successful commit)
-                    var integrationEvent = new BookingInitiated( // Use record from Common
-                         BookingId: booking.Id,
-                         UserId: booking.UserId,
-                         EventId: booking.EventId,
-                         SeatId: request.SeatId,
-                         TotalPrice: booking.TotalPrice,
-                         Timestamp: DateTime.UtcNow
+                    var paymentMessage = new InitiatePaymentRequested(
+                        BookingId: booking.Id,
+                        UserId: booking.UserId,
+                        OrderType: "TicketBooking", // Or more specific
+                        Amount: booking.TotalPrice,
+                        Currency: "VND", // Example: Get this from event/system configuration
+                        OrderInfo: $"Payment for booking of seat {request.SeatId} for event {request.EventId}",
+                        PreferredGateway: PaymentGatewaySelection.VnPay, // Or determine based on user/event preference
+                        IpAddress: request.UserIpAddress, // Assuming this is passed in CreateBookingCommand
+                        Timestamp: DateTime.UtcNow
                     );
-                    await _publishEndpoint.Publish(integrationEvent, cancellationToken);
-                    _logger.LogInformation("Published BookingInitiated event for {BookingId}.", booking.Id);
+
+                    await _publishEndpoint.Publish(paymentMessage, cancellationToken);
+                    _logger.LogInformation("Published InitiatePaymentRequested event for BookingId: {BookingId}", booking.Id);
 
 
                     // 10. Map result to Response DTO

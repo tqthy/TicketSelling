@@ -16,6 +16,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookingService.Infrastructu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{EE1C92B6-B02F-4597-B1EC-D11448DA4EA8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService.Api", "PaymentService.Api\PaymentService.Api.csproj", "{7A7C4612-7E4F-492F-A5C6-D1F9E68EB828}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService.Core", "PaymentService.Core\PaymentService.Core.csproj", "{B527637B-10A9-476A-AC20-E2145DB61EB5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +58,13 @@ Global
 		{EE1C92B6-B02F-4597-B1EC-D11448DA4EA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE1C92B6-B02F-4597-B1EC-D11448DA4EA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE1C92B6-B02F-4597-B1EC-D11448DA4EA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A7C4612-7E4F-492F-A5C6-D1F9E68EB828}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A7C4612-7E4F-492F-A5C6-D1F9E68EB828}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A7C4612-7E4F-492F-A5C6-D1F9E68EB828}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A7C4612-7E4F-492F-A5C6-D1F9E68EB828}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
