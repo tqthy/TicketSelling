@@ -3,9 +3,9 @@ using PaymentService.Core.Entities;
 
 namespace PaymentService.Core.Persistence.Repositories;
 
-public class PaymentRepository(IUnitOfWork unitOfWork, PaymentDbContext dbContext) : IPaymentRepository
+public class PaymentRepository(PaymentDbContext dbContext) : IPaymentRepository
 {
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    // private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly PaymentDbContext _dbContext = dbContext;
 
     public void Add(Payment payment)

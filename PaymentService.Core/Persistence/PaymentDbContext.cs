@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PaymentService.Core.Persistence;
 
-public class PaymentDbContext : DbContext
+public class PaymentDbContext(DbContextOptions<PaymentDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

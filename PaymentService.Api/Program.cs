@@ -1,9 +1,21 @@
 using Common.Messages;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PaymentService.Core.Consumers;
+using PaymentService.Core.Contracts.Gateways;
+using PaymentService.Core.Contracts.Persistence;
+using PaymentService.Core.Gateways;
 using PaymentService.Core.Persistence;
+using PaymentService.Core.Persistence.Repositories;
+using PaymentService.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<PaymentDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PaymentDb"))
+);
+        
 
 // Add services to the container.
 
@@ -57,6 +69,9 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
+builder.Services.AddScoped<IPaymentGateway, VnPayGateway>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

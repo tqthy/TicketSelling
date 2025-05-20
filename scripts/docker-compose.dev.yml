@@ -45,6 +45,8 @@ services:
     build:
       context: ../
       dockerfile: ./UserService/Dockerfile
+    ports:
+        - "8082:8082"
     environment:
       ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
       AspNetCore__Environment: Development
@@ -58,6 +60,8 @@ services:
     build:
       context: ../
       dockerfile: ./VenueService/Dockerfile
+    ports:
+        - "8083:8083"
     environment:
       ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development
@@ -71,6 +75,8 @@ services:
     build:
       context: ../
       dockerfile: ./BookingService.Api/Dockerfile
+    ports:
+        - "8084:8084"
     environment:
       ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development

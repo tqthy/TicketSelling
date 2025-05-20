@@ -5,6 +5,7 @@ using VNPay.NetCore;
 
 namespace PaymentService.Api.Controllers;
 
+[ApiController]
 [Route("api/[controller]")]
 public class PaymentsController : ControllerBase
 {

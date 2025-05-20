@@ -70,6 +70,8 @@ builder.Services.AddMassTransit(x =>
         
         cfg.ReceiveEndpoint("booking-service.event", e => // Kebab-case queue name
         {
+            e.ClearSerialization();
+            e.UseRawJsonSerializer();
             e.ConfigureConsumer<EventApprovedConsumer>(context);
             
             e.UseMessageRetry(r => r.Intervals(
