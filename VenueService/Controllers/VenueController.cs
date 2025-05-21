@@ -149,7 +149,7 @@ namespace VenueService.Controllers
             } catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while fetching seats for venue {VenueId}.", venueId);
-                if (ex.Message == "Venue not found")
+                if (ex.Message == "Venue not found.")
                 {
                     return NotFound($"Venue with ID {venueId} not found.");
                 }

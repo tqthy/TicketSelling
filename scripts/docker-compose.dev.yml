@@ -26,7 +26,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
-      # RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USERNAME: ${DB_USERNAME}
@@ -46,7 +46,7 @@ services:
       context: ../
       dockerfile: ./UserService/Dockerfile
     ports:
-        - "8082:8082"
+      - "8082:8082"
     environment:
       ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
       AspNetCore__Environment: Development
@@ -61,7 +61,7 @@ services:
       context: ../
       dockerfile: ./VenueService/Dockerfile
     ports:
-        - "8083:8083"
+      - "8083:8083"
     environment:
       ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development
@@ -76,7 +76,7 @@ services:
       context: ../
       dockerfile: ./BookingService.Api/Dockerfile
     ports:
-        - "8084:8084"
+      - "8084:8084"
     environment:
       ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development
@@ -103,7 +103,7 @@ services:
     networks:
       - backend-net
     healthcheck:
-      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1" ]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -114,16 +114,20 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-#      - ES_TMPDIR=/usr/share/elasticsearch/tmp_mounted
+    #      - ES_TMPDIR=/usr/share/elasticsearch/tmp_mounted
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data
-#      - ./mnt/es_temp_data:/usr/share/elasticsearch/tmp_mounted
+    #      - ./mnt/es_temp_data:/usr/share/elasticsearch/tmp_mounted
     ports:
       - "9200:9200"
     networks:
       - backend-net
-    healthcheck: 
-      test: [ "CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1" ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:9200/_cluster/health || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -139,17 +143,17 @@ services:
     networks:
       - backend-net
     depends_on:
-      elasticsearch: 
+      elasticsearch:
         condition: service_healthy
     environment:
       LS_JAVA_OPTS: "-Xms256m -Xmx256m"
     healthcheck:
-      test: [ "CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1" ]
-      interval: 10s       # Check every 10 seconds
-      timeout: 5s         # Wait up to 5 seconds for a response
-      retries: 12         # Retry 12 times (total 2 minutes of retries after start_period)
+      test: ["CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1"]
+      interval: 10s # Check every 10 seconds
+      timeout: 5s # Wait up to 5 seconds for a response
+      retries: 12 # Retry 12 times (total 2 minutes of retries after start_period)
       start_period: 60s
-  
+
   kibana:
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     environment:
@@ -162,7 +166,7 @@ services:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1" ]
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

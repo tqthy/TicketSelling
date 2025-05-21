@@ -5,13 +5,11 @@ import { VenueService } from "./venue.service";
 
 @Module({
   imports: [
+    ConfigModule,
     HttpModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        baseURL: configService.get(
-          "VENUE_SERVICE_URL",
-          "http://localhost:5110"
-        ),
+      useFactory: () => ({
+        baseURL: "http://venueservice:8083",
         timeout: 5000,
         maxRedirects: 5,
         headers: {

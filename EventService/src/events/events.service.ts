@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-  InternalServerErrorException,
 } from "@nestjs/common";
 import { LoggerService } from "../common/services/logger.service";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -120,26 +119,30 @@ export class EventsService {
 
     // event.status = EventStatus.PUBLISHED;
     const savedEvent = await this.eventRepository.save(event);
+    this.logger.log(`Event ${event.eventId} status updated to PUBLISHED`);
 
     try {
-      // const seats = await this.venueService.getAllSeatsByVenue(event.venueId);
+      this.logger.log(`Fetching seats for venue ${event.venueId}`);
+      const seats = await this.venueService.getAllSeatsByVenue(event.venueId);
+
+      const seatIds = seats.map((seat) => seat.seatId);
+      this.logger.log(
+        `Retrieved ${seatIds.length} seats for venue ${event.venueId}`
+      );
 
       await this.eventApprovedProducer.publishEventApproved(
         event.eventId,
         event.venueId,
-        []
+        seatIds
       );
 
       this.logger.log(
-        `Published EventApproved message for event ${event.eventId}`
+        `Published EventApproved message for event ${event.eventId} with ${seatIds.length} seats`
       );
     } catch (error) {
       this.logger.error(
-        `Failed to publish EventApproved message for event ${event.eventId}`,
+        `Failed to publish EventApproved message for event ${event.eventId}: ${error.message}`,
         error
-      );
-      throw new InternalServerErrorException(
-        `Failed to publish EventApproved message: ${error.message}`
       );
     }
 
