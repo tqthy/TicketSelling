@@ -1,6 +1,11 @@
 export interface EventApproved {
   eventId: string;
   venueId: string;
-  seatIds: string[];
+  seats: SeatWithPrice[];
   timestamp: Date;
+}
+
+export interface SeatWithPrice {
+  seatId: string;
+  price: number;
 }

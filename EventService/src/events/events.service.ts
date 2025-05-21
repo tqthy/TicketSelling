@@ -13,6 +13,7 @@ import { UpdateEventDto } from "./dto/update-event.dto";
 import { RescheduleEventDto } from "./dto/reschedule-event.dto";
 import { EventApprovedProducer } from "../messaging/producers/event-approved.producer";
 import { VenueService } from "../venue/venue.service";
+import { SeatWithPrice } from "../messaging/interfaces/message-types.interface";
 
 @Injectable()
 export class EventsService {
@@ -124,20 +125,23 @@ export class EventsService {
     try {
       this.logger.log(`Fetching seats for venue ${event.venueId}`);
       const seats = await this.venueService.getAllSeatsByVenue(event.venueId);
-
-      const seatIds = seats.map((seat) => seat.seatId);
       this.logger.log(
-        `Retrieved ${seatIds.length} seats for venue ${event.venueId}`
+        `Retrieved ${seats.length} seats for venue ${event.venueId}`
       );
-
+      const seatsWithPrices: SeatWithPrice[] = seats.map((seat) => {
+        const price = event.sectionPricing.find(
+          (pricing) => pricing.sectionId === seat.sectionId
+        )?.price;
+        return { seatId: seat.seatId, price: price || 0 };
+      });
       await this.eventApprovedProducer.publishEventApproved(
         event.eventId,
         event.venueId,
-        seatIds
+        seatsWithPrices
       );
 
       this.logger.log(
-        `Published EventApproved message for event ${event.eventId} with ${seatIds.length} seats`
+        `Published EventApproved message for event ${event.eventId} with ${seats.length} seats`
       );
     } catch (error) {
       this.logger.error(

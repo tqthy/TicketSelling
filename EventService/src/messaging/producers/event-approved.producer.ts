@@ -1,6 +1,9 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { EventApproved } from "../interfaces/message-types.interface";
+import {
+  EventApproved,
+  SeatWithPrice,
+} from "../interfaces/message-types.interface";
 import { LoggerService } from "../../common/services/logger.service";
 import * as amqp from "amqplib";
 
@@ -71,17 +74,17 @@ export class EventApprovedProducer implements OnModuleInit {
   async publishEventApproved(
     eventId: string,
     venueId: string,
-    seatIds: string[]
+    seats: SeatWithPrice[]
   ): Promise<void> {
     const message: EventApproved = {
       eventId,
       venueId,
-      seatIds,
+      seats,
       timestamp: new Date(),
     };
 
     this.logger.log(
-      `Publishing EventApproved message for event ${eventId} with ${seatIds.length} seats`
+      `Publishing EventApproved message for event ${eventId} with ${seats.length} seats`
     );
 
     try {
