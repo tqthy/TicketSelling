@@ -43,17 +43,17 @@ output "manager_private_ip" {
 # RDS Outputs
 output "rds_endpoint" {
   description = "The connection endpoint for the RDS instance"
-  value       = module.rds.db_endpoint
+  value       = var.create_rds ? module.rds[0].db_endpoint : "RDS not created"
 }
 
 output "rds_identifier" {
   description = "The RDS instance identifier"
-  value       = module.rds.db_identifier
+  value       = var.create_rds ? module.rds[0].db_identifier : "RDS not created"
 }
 
 output "rds_port" {
   description = "The database port"
-  value       = module.rds.db_port
+  value       = var.create_rds ? module.rds[0].db_port : "RDS not created"
 }
 
 # Security Groups Outputs

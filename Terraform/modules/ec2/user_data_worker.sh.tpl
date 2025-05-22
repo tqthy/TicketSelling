@@ -17,5 +17,35 @@ usermod -aG docker ubuntu
 systemctl enable docker
 systemctl start docker
 
-# This gets replaced by terraform templatefile()
-docker swarm join --token ${join_token} ${manager_ip}:2377
+# Wait for Docker to start
+sleep 10
+
+# Retry mechanism for fetching the join token from the manager
+MAX_RETRIES=30
+RETRY_DELAY=10
+COUNT=0
+
+while [ $COUNT -lt $MAX_RETRIES ]; do
+  echo "Attempt $COUNT: Fetching swarm join token from manager..."
+  
+  # Try to get the token from the manager using its private IP
+  JOIN_TOKEN=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@${manager_ip} 'docker swarm join-token -q worker' 2>/dev/null)
+  
+  # If that fails, try the public IP
+  if [ -z "$JOIN_TOKEN" ]; then
+    JOIN_TOKEN=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@${manager_public_ip} 'docker swarm join-token -q worker' 2>/dev/null)
+  fi
+  
+  # If we got a token, join the swarm
+  if [ ! -z "$JOIN_TOKEN" ]; then
+    echo "Successfully retrieved join token. Joining swarm..."
+    docker swarm join --token $JOIN_TOKEN ${manager_ip}:2377
+    exit 0
+  fi
+  
+  echo "Failed to get join token. Retrying in $RETRY_DELAY seconds..."
+  sleep $RETRY_DELAY
+  COUNT=$((COUNT+1))
+done
+
+echo "Failed to join swarm after $MAX_RETRIES attempts"

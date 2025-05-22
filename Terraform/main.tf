@@ -58,7 +58,16 @@ module "security_groups" {
   ssh_cidr = "${chomp(data.http.myipv4.response_body)}/32"
 }
 
+
+# Only create RDS if enabled
+variable "create_rds" {
+  description = "Whether to create RDS instance"
+  type        = bool
+  default     = true
+}
+
 module "rds" {
+  count               = var.create_rds ? 1 : 0
   source              = "./modules/rds"
   name                = var.project_name
   private_subnet_ids  = module.vpc.private_subnet_ids
@@ -81,6 +90,11 @@ resource "random_password" "db_password" {
 }
 
 # Create the SSH key pair for EC2 instances
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "aws_key_pair" "ticket_selling_key" {
   key_name   = var.ec2_key_name
   public_key = tls_private_key.ssh_key.public_key_openssh
@@ -104,5 +118,5 @@ module "ec2" {
   worker_count        = var.worker_count
   private_key_path    = local_file.private_key.filename
   
-  depends_on = [module.rds, aws_key_pair.ticket_selling_key, local_file.private_key]  # Ensure dependencies are ready before EC2 instances
+  depends_on = [aws_key_pair.ticket_selling_key, local_file.private_key]  # Ensure dependencies are ready before EC2 instances
 }
