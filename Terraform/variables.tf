@@ -7,7 +7,7 @@ variable "project_name" {
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "ap-southeast-1"
+  default     = "us-east-1"
 }
 
 variable "ec2_key_name" {
@@ -51,7 +51,7 @@ variable "db_name" {
 variable "availability_zone" {
   description = "The availability zone to deploy resources into"
   type        = string
-  default     = "ap-southeast-1a"
+  default     = "us-east-1a"
 }
 
 variable "vpc_cidr" {

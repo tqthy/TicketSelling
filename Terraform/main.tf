@@ -55,6 +55,7 @@ module "rds" {
   db_password         = var.db_password != "" ? var.db_password : random_password.db_password.result
   db_allocated_storage = 20
   db_sg_id            = module.security_groups.rds_sg_id
+  tags                = var.tags
 }
 
 # Generate a random password if one isn't provided
