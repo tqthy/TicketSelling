@@ -89,6 +89,3 @@ resource "aws_security_group" "rds" {
   }
   tags = { Name = "${var.name}-rds-sg" }
 }
-
-output "swarm_sg_id" { value = aws_security_group.swarm.id }
-output "rds_sg_id"   { value = aws_security_group.rds.id }

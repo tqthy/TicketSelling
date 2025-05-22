@@ -11,18 +11,24 @@ resource "aws_internet_gateway" "gw" {
 }
 
 resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidr)
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr
+  cidr_block              = var.public_subnet_cidr[count.index]
+  availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
-  availability_zone       = var.az
-  tags = { Name = "${var.name}-public" }
+  tags = { 
+    Name = "${var.name}-public-${substr(var.availability_zones[count.index], -1, 1)}"
+  }
 }
 
 resource "aws_subnet" "private" {
+  count             = length(var.private_subnet_cidr)
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidr
-  availability_zone = var.az
-  tags = { Name = "${var.name}-private" }
+  cidr_block        = var.private_subnet_cidr[count.index]
+  availability_zone = var.availability_zones[count.index]
+  tags = { 
+    Name = "${var.name}-private-${substr(var.availability_zones[count.index], -1, 1)}"
+  }
 }
 
 resource "aws_route_table" "public" {
@@ -37,10 +43,7 @@ resource "aws_route" "public_internet_access" {
 }
 
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
-
-output "vpc_id"            { value = aws_vpc.main.id }
-output "public_subnet_id"  { value = aws_subnet.public.id }
-output "private_subnet_id" { value = aws_subnet.private.id }

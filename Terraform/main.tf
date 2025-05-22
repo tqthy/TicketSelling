@@ -23,16 +23,31 @@ data "aws_ami" "ubuntu_22_04" {
 
 # Get the current public IP for security group rules
 data "http" "myip" {
-  url = "https://ifconfig.me/ip"
+  url = "https://api.ipify.org?format=text"
+}
+
+# Get the current public IPv4 address for security group rules
+data "http" "myipv4" {
+  url = "https://ipv4.icanhazip.com"
 }
 
 module "vpc" {
-  source             = "./modules/vpc"
-  name               = var.project_name
-  vpc_cidr           = var.vpc_cidr
-  public_subnet_cidr = var.public_subnet_cidr
-  private_subnet_cidr = var.private_subnet_cidr
-  az                 = var.availability_zone
+  source              = "./modules/vpc"
+  name                = var.project_name
+  vpc_cidr            = var.vpc_cidr
+  public_subnet_cidr = [
+    cidrsubnet(var.vpc_cidr, 8, 1),  # 10.10.1.0/24
+    cidrsubnet(var.vpc_cidr, 8, 2)   # 10.10.2.0/24
+  ]
+  private_subnet_cidr = [
+    cidrsubnet(var.vpc_cidr, 8, 3),   # 10.10.3.0/24
+    cidrsubnet(var.vpc_cidr, 8, 4)    # 10.10.4.0/24
+  ]
+  availability_zones = [
+    "${var.aws_region}a",
+    "${var.aws_region}b"
+  ]
+  
 }
 
 module "security_groups" {
@@ -40,16 +55,16 @@ module "security_groups" {
   name     = var.project_name
   vpc_id   = module.vpc.vpc_id
   db_port  = 5432
-  ssh_cidr = "${chomp(data.http.myip.response_body)}/32"
+  ssh_cidr = "${chomp(data.http.myipv4.response_body)}/32"
 }
 
 module "rds" {
   source              = "./modules/rds"
   name                = var.project_name
-  private_subnet_ids  = [module.vpc.private_subnet_id]
+  private_subnet_ids  = module.vpc.private_subnet_ids
   db_engine           = "postgres"
-  db_engine_version   = "15.5"  # Using a stable version
-  db_instance_class   = "db.t3.micro"
+  db_engine_version   = "17.5"
+  db_instance_class   = "db.m5.large"
   db_name             = var.db_name
   db_username         = var.db_username
   db_password         = var.db_password != "" ? var.db_password : random_password.db_password.result
@@ -65,16 +80,29 @@ resource "random_password" "db_password" {
   override_special = "_%@"
 }
 
+# Create the SSH key pair for EC2 instances
+resource "aws_key_pair" "ticket_selling_key" {
+  key_name   = var.ec2_key_name
+  public_key = tls_private_key.ssh_key.public_key_openssh
+}
+
+# Save private key to file
+resource "local_file" "private_key" {
+  content         = tls_private_key.ssh_key.private_key_pem
+  filename        = var.private_key_path
+  file_permission = "0400"
+}
+
 module "ec2" {
   source              = "./modules/ec2"
   ami_id              = data.aws_ami.ubuntu_22_04.id
   instance_type       = "t3.micro"
   subnet_id           = module.vpc.public_subnet_id
   security_group_ids  = [module.security_groups.swarm_sg_id]
-  key_name            = var.ec2_key_name
+  key_name            = aws_key_pair.ticket_selling_key.key_name
   name                = var.project_name
   worker_count        = var.worker_count
-  private_key_path    = var.private_key_path
+  private_key_path    = local_file.private_key.filename
   
-  depends_on = [module.rds]  # Ensure RDS is ready before EC2 instances
+  depends_on = [module.rds, aws_key_pair.ticket_selling_key, local_file.private_key]  # Ensure dependencies are ready before EC2 instances
 }

@@ -20,7 +20,3 @@ resource "aws_db_instance" "this" {
   backup_retention_period = 0
   publicly_accessible     = false # secure
 }
-
-output "db_endpoint" {
-  value = aws_db_instance.this.endpoint
-}
