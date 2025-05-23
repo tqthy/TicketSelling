@@ -16,6 +16,7 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         public Guid EventId { get; private set; }
         public Guid SeatId { get; private set; }
 
+        public decimal SeatPrice { get; private set; }
         /// <summary>
         /// Current status of the seat (e.g., Available, Reserved, Sold).
         /// Use the SeatAvailabilityStatus constants/enum.
@@ -36,10 +37,11 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         private EventSeatStatus() { }
 
         // Optional: Public constructor if needed, ensure valid initial state
-        public EventSeatStatus(Guid eventId, Guid seatId)
+        public EventSeatStatus(Guid eventId, Guid seatId, decimal seatPrice)
         {
             EventId = eventId;
             SeatId = seatId;
+            SeatPrice = seatPrice;
             Status = SeatAvailabilityStatus.Available; // Default to Available
             ReservedUntil = null;
             CurrentBookingId = null;
@@ -130,6 +132,7 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
                 EventId = eventId,
                 SeatId = seatId,
                 Status = status,
+                SeatPrice = 10, // Default or placeholder price
                 ReservedUntil = reservedUntil
             };
         }

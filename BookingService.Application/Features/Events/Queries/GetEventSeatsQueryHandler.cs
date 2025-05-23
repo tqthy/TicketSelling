@@ -71,24 +71,14 @@ namespace BookingService.Application.Features.Events.Queries
 
             foreach (var seatStatus in availableSeatStatuses)
             {
-                decimal price = 0;
-                try
-                {
-                    // Fetch price for each seat
-                    price = await _eventServiceApiClient.GetSeatPriceAsync(request.EventId, seatStatus.SeatId, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to get price for SeatId {SeatId} in EventId {EventId}. Price will be 0.", seatStatus.SeatId, request.EventId);
-                    // Continue, but price will be default (0)
-                }
+                
 
                 seatDetailsMap.TryGetValue(seatStatus.SeatId, out var details);
 
                 responseDtos.Add(new EventSeatDetailDto
                 {
                     SeatId = seatStatus.SeatId,
-                    Price = price,
+                    Price = seatStatus.SeatPrice,
                     Status = seatStatus.Status, // Reflect actual current status
                     SeatNumber = details?.SeatNumber,
                     Row = details?.Row,

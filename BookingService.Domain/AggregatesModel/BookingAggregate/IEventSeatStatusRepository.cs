@@ -26,6 +26,15 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         Task<EventSeatStatus?> FindByEventAndSeatForUpdateAsync(Guid eventId, Guid seatId);
 
         /// <summary>
+        /// Finds an EventSeatStatus by its composite key with the intent to update,
+        /// potentially acquiring a database lock (depending on implementation).
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <param name="seatIds">The IDs of the seat.</param>
+        /// <returns>The found EventSeatStatus ready for update, or null if not found.</returns>
+        Task<List<EventSeatStatus>> FindByEventAndSeatsForUpdateAsync(Guid eventId, List<Guid> seatIds);
+
+        /// <summary>
         /// Marks an EventSeatStatus entity as modified in the Unit of Work.
         /// </summary>
         /// <param name="seatStatus">The entity to mark for update.</param>

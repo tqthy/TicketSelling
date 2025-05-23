@@ -84,6 +84,16 @@ builder.Services.AddAuthentication();
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -104,6 +114,8 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress);
     };
 });
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 

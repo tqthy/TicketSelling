@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using BookingService.Api.DTOs;
 // Reference DTOs/Commands/Queries from Application or Common layer
 using BookingService.Application.Features.Bookings.Commands;
 using BookingService.Application.Features.Bookings.Queries;
@@ -40,7 +41,7 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult>
-        CreateBooking([FromBody] CreateBookingApiRequest apiRequest) // Use API-specific DTO if needed
+        CreateBooking([FromBody] CreateBookingRequestDto apiRequest) // Use API-specific DTO if needed
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId))
@@ -66,7 +67,7 @@ public class BookingsController : ControllerBase
         var command = new CreateBookingCommand
         {
             EventId = apiRequest.EventId,
-            SeatId = apiRequest.SeatId,
+            SeatIds = apiRequest.SeatIds,
             UserId = userId,
             UserIpAddress = ipAddress 
         };
@@ -175,9 +176,3 @@ public class BookingsController : ControllerBase
     }
 }
 
-// Define API-specific request DTO if different from Application layer Command
-public class CreateBookingApiRequest
-{
-    [Required] public Guid EventId { get; set; }
-    [Required] public Guid SeatId { get; set; }
-}

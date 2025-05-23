@@ -29,14 +29,14 @@ namespace BookingService.Application.IntegrationEventHandlers
             var message = context.Message;
             _logger.LogInformation(
                 "Received EventApprovedIntegrationEvent for EventId: {EventId} with {SeatCount} seats",
-                message.EventId, message.SeatIds.Count);
+                message.EventId, message.Seats.Count);
 
             // Idempotency check: Ensure we haven't processed this event's seats already.
             // This can be complex. A simple check might be to see if any seat status for this event already exists.
             // A more robust check might involve storing processed event IDs or using a distributed lock if high concurrency is expected.
             bool alreadyProcessed = await _dbContext.EventSeatStatuses
-                                           .AnyAsync(ess => ess.EventId == message.EventId && message.SeatIds.Contains(ess.SeatId),
-                                                     context.CancellationToken);
+                .AnyAsync(ess => ess.EventId == message.EventId && message.Seats.Any(seat => seat.SeatId == ess.SeatId),
+                    context.CancellationToken);
 
             if (alreadyProcessed)
             {
@@ -47,20 +47,20 @@ namespace BookingService.Application.IntegrationEventHandlers
             }
 
             var newSeatStatuses = new List<EventSeatStatus>();
-            foreach (var seatId in message.SeatIds)
+            foreach (var seat in message.Seats)
             {
                  // More precise idempotency: check if this specific seat for this event already exists
                  var existingStatus = await _dbContext.EventSeatStatuses
-                    .FirstOrDefaultAsync(s => s.EventId == message.EventId && s.SeatId == seatId, context.CancellationToken);
+                    .FirstOrDefaultAsync(s => s.EventId == message.EventId && s.SeatId == seat.SeatId, context.CancellationToken);
 
                  if (existingStatus == null)
                  {
-                    newSeatStatuses.Add(new EventSeatStatus(message.EventId, seatId)); // Status defaults to 'Available'
+                    newSeatStatuses.Add(new EventSeatStatus(message.EventId, seat.SeatId, seat.Price)); // Status defaults to 'Available'
                  }
                  else
                  {
                     _logger.LogInformation("Seat status for Event {EventId}, Seat {SeatId} already exists with status {Status}. Skipping.",
-                                           message.EventId, seatId, existingStatus.Status);
+                                           message.EventId, seat.SeatId, existingStatus.Status);
                  }
             }
 

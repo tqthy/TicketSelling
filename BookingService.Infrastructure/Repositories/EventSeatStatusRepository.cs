@@ -49,6 +49,22 @@ namespace BookingService.Infrastructure.Repositories
 
              // Alternative: Optimistic Concurrency requires RowVersion checks during SaveChangesAsync
         }
+        
+        public async Task<List<EventSeatStatus>> FindByEventAndSeatsForUpdateAsync(Guid eventId, List<Guid> seatIds)
+        {
+            try
+            {
+                // Use LINQ with EF Core for better readability and maintainability
+                return await _context.EventSeatStatuses
+                    .Where(ess => ess.EventId == eventId && seatIds.Contains(ess.SeatId))
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching EventSeatStatuses for Event {EventId} and Seats {SeatIds}", eventId, string.Join(", ", seatIds));
+                throw; // Re-throw to allow transaction rollback
+            }
+        }
 
         public void Update(EventSeatStatus seatStatus)
         {
