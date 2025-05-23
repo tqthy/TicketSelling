@@ -19,7 +19,11 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm ci --only=production && npm cache clean --force
+# Copy package-lock.json to ensure consistent installs
+COPY package-lock.json ./
+
+# Install production dependencies only
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=development /usr/src/app/dist ./dist
 
@@ -39,8 +43,8 @@ USER nestjs
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
 ENV NODE_OPTIONS="--max-old-space-size=2048 --max-http-header-size=16384"
 
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/src/main.js"]
