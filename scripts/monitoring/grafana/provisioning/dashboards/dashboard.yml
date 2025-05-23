@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'My Provisioned Dashboards'
+    orgId: 1 
+    folder: '' 
+    type: file 
+    disableDeletion: false # Cho phép xóa dashboard qua UI Grafana (true = không cho phép)
+    editable: true # Cho phép chỉnh sửa dashboard qua UI Grafana (true = cho phép)
+    options:
+      path: /var/lib/grafana/provisioned_dashboards
