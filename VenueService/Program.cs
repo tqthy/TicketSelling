@@ -1,3 +1,4 @@
+using Common.Secret;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Debugging;
@@ -22,6 +23,8 @@ Log.Logger = new LoggerConfiguration()
     .CreateBootstrapLogger(); // Use minimal logger until host is built
 
 var builder = WebApplication.CreateBuilder(args);
+
+// var secrets = await Doppler.FetchSecretsAsync();
 
 // Configure Serilog for ASP.NET Core host
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
