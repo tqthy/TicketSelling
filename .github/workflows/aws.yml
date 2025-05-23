@@ -73,7 +73,7 @@ jobs:
       - name: Build and push Docker image (EventService)
         uses: docker/build-push-action@v5
         with:
-          context: ./EventService # Note: Context is different as per your compose file
+          context: . # Note: Context is different as per your compose file
           file: ./EventService/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: your-registry/eventservice:${{ steps.meta.outputs.version }}
