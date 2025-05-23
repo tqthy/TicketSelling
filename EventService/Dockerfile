@@ -4,13 +4,13 @@ FROM node:20-alpine AS build
 WORKDIR /usr/src/app
 
 # Copy package files for better caching
-COPY package*.json ./
+COPY ./EventService/package*.json ./
 
 # Install all dependencies including dev dependencies
 RUN npm install
 
 # Copy the rest of the application code
-COPY . .
+COPY ./EventService/. .
 
 # Build the application
 RUN npm run build
@@ -36,6 +36,8 @@ COPY --from=build /usr/src/app/swagger-config.ts ./swagger-config.ts
 # non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 -G nodejs
+
+RUN apk add --no-cache wget
 
 # change ownership of the working directory to the non-root user
 RUN chown -R nestjs:nodejs /usr/src/app
