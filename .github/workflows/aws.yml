@@ -47,20 +47,69 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          # images: ${{ env.IMAGE_NAME }}
+          images: |
+            tqt0304/apigateway
+            tqt0304/eventservice
+            tqt0304/userservice
+            tqt0304/venueservice
+            tqt0304/bookingservice
           tags: |
             # Use commit SHA for unique tagging (recommended)
             type=sha,prefix=sha-
             # Optionally, tag 'latest' on pushes to main branch
             type=raw,value=latest,enable={{is_default_branch}}
 
+#      - name: Build and push Docker image (UserService)
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          file: ./UserService/Dockerfile
+#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
+#          tags: ${{ steps.meta.outputs.tags }}
+#          labels: ${{ steps.meta.outputs.labels }}
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+      - name: Build and push Docker image (EventService)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./EventService # Note: Context is different as per your compose file
+          file: ./EventService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: your-registry/eventservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build and push Docker image (UserService)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./UserService/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
-          tags: ${{ steps.meta.outputs.tags }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: your-registry/userservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (VenueService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./VenueService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: your-registry/venueservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (BookingService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./BookingService.Api/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: your-registry/bookingservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -134,6 +183,27 @@ jobs:
             export RDS_HOST_ENV="${RDS_HOST}"
             export RDS_PORT_ENV="${RDS_PORT}"
             export RDS_DB_NAME_ENV="${RDS_DB_NAME}"
+
+            export DB_USER_CONNECTION_STRING="${{ secrets.DB_USER_CONNECTION_STRING }}"
+            export DB_VENUE_CONNECTION_STRING="${{ secrets.DB_VENUE_CONNECTION_STRING }}"
+            export DB_BOOKING_CONNECTION_STRING="${{ secrets.DB_BOOKING_CONNECTION_STRING }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export JWT_ISSUER="${{ secrets.JWT_ISSUER }}"
+            export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
+            export RABBITMQ_USER="${{ secrets.RABBITMQ_USER }}"
+            export RABBITMQ_PASSWORD="${{ secrets.RABBITMQ_PASSWORD }}"
+            export RABBITMQ_HOST="rabbitmq" # Use service discovery name
+            export RABBITMQ_PORT="5672"
+            export DB_HOST="db_host_for_eventservice" # Replace with actual hostname or service name
+            export DB_PORT="5432" # Replace with actual port
+            export DB_USERNAME="${{ secrets.DB_USERNAME_EVENTSERVICE }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD_EVENTSERVICE }}"
+            export DB_DATABASE="events" # Replace with actual DB name
+            export DB_SYNCHRONIZE="false"
+            export NODE_ENV="production"
+            export PORT="8081"
+            export IMAGE_TAG="${{ steps.meta.outputs.version }}"
+            export STACK_VERSION="8.13.4"
 
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
