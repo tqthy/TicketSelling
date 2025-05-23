@@ -1,11 +1,12 @@
-FROM node:20-alpine AS development
+# Build stage
+FROM node:20-alpine AS build
 
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Copy package.json first for better caching
+COPY package.json ./
 
-# Install all dependencies (including dev dependencies)
+# Install all dependencies including dev dependencies
 RUN npm install
 
 # Copy the rest of the application code
@@ -14,20 +15,23 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Production stage
 FROM node:20-alpine AS production
 
 ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+# Copy package.json from the build stage
+COPY --from=build /usr/src/app/package.json ./
 
+# Install only production dependencies
 RUN npm install --only=production && npm cache clean --force
 
-COPY --from=development /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/dist ./dist
 
 # copy config files
-COPY --from=development /usr/src/app/swagger-config.ts ./swagger-config.ts
+COPY --from=build /usr/src/app/swagger-config.ts ./swagger-config.ts
 
 # non-root user
 RUN addgroup -g 1001 -S nodejs && \
