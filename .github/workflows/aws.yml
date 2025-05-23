@@ -76,7 +76,7 @@ jobs:
           context: . # Note: Context is different as per your compose file
           file: ./EventService/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: your-registry/eventservice:${{ steps.meta.outputs.version }}
+          tags: tqt0304/eventservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -87,7 +87,7 @@ jobs:
           context: .
           file: ./UserService/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: your-registry/userservice:${{ steps.meta.outputs.version }}
+          tags: tqt0304/userservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -98,7 +98,7 @@ jobs:
           context: .
           file: ./VenueService/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: your-registry/venueservice:${{ steps.meta.outputs.version }}
+          tags: tqt0304/venueservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -109,7 +109,7 @@ jobs:
           context: .
           file: ./BookingService.Api/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: your-registry/bookingservice:${{ steps.meta.outputs.version }}
+          tags: tqt0304/bookingservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
