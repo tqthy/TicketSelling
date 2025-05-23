@@ -3,8 +3,8 @@ FROM node:20-alpine AS build
 
 WORKDIR /usr/src/app
 
-# Copy package.json first for better caching
-COPY package.json ./
+# Copy package files for better caching
+COPY package*.json ./
 
 # Install all dependencies including dev dependencies
 RUN npm install
