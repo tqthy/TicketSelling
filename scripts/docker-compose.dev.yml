@@ -231,8 +231,11 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: "admin"
       GF_SECURITY_ADMIN_PASSWORD: "admin"
-    volumes:
-      - grafana_data:/var/lib/grafana
+    volumes: # Add volume mounts for provisioning
+      - grafana_data:/var/lib/grafana # Persistent data
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      # Mount the directory containing the actual dashboard JSON files
+      - ./monitoring/grafana/provisioning/my-dashboards:/var/lib/grafana/provisioned_dashboards
     ports:
       - "3000:3000"
     depends_on:
