@@ -2,13 +2,16 @@ FROM node:20-alpine AS development
 
 WORKDIR /usr/src/app
 
+# Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
-RUN npm ci
+# Install all dependencies (including dev dependencies)
+RUN npm install
 
-# copy the rest of the application code
+# Copy the rest of the application code
 COPY . .
 
+# Build the application
 RUN npm run build
 
 FROM node:20-alpine AS production
@@ -19,8 +22,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm install --omit=dev && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 COPY --from=development /usr/src/app/dist ./dist
 
