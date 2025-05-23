@@ -1,169 +1,452 @@
+# services:
+#   userservice:
+#     image: tqt0304/userservice:latest
+#     environment:
+#       ASPNETCORE_ENVIRONMENT: Production
+#     secrets:
+#       # Grant the service access to the Swarm secret
+#       - source: db_connection_string # Name of the secret IN SWARM
+#         target: ConnectionStrings__UserServiceDb # Filename inside /run/secrets/. Matches AddKeyPerFile structure.
+#     networks:
+#       - backend-net
+#     deploy:
+#       replicas: 2
+#       placement:
+#         constraints: [node.role == worker] # Place on worker nodes
+#       update_config:
+#         parallelism: 1
+#         delay: 10s
+#       restart_policy:
+#         condition: on-failure
+
+#   # Message Queue
+#   rabbitmq:
+#     image: rabbitmq:3.13.7-management-alpine
+#     hostname: rabbitmq # Consistent hostname
+#     ports:
+#       - "15672:15672" # Management UI port
+#     volumes:
+#       - ~/data_volume/rabbitmq_data:/var/lib/rabbitmq/ # Persist data
+#     configs:
+#       - source: rabbitmq_config
+#         target: /etc/rabbitmq/rabbitmq.conf
+#     networks:
+#       - backend-net
+#     deploy:
+#       replicas: 1
+#       placement:
+#         constraints: [node.role == manager]
+#       restart_policy:
+#         condition: on-failure
+#   # Logging - Elasticsearch (Data Store)
+#   elasticsearch:
+#     image: elasticsearch:7.17.10
+#     environment:
+#       - discovery.type=single-node
+#       - bootstrap.memory_lock=true
+#       - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Adjust heap size
+#     ulimits: # Required by Elasticsearch
+#       memlock:
+#         soft: -1
+#         hard: -1
+#     volumes:
+#       - ./elasticsearch_data:/usr/share/elasticsearch/data # Persist data using named volume
+#     networks:
+#       - backend-net
+#     ports:
+#       - "9200:9200" # API port
+#     # this healthcheck ensures ES is ready before dependent services fully start actions
+#     healthcheck:
+#       test:
+#         [
+#           "CMD-SHELL",
+#           "curl -sf http://localhost:9200/_cluster/health || exit 1",
+#         ]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 5
+#     deploy:
+#       replicas: 1
+#       placement:
+#         constraints: [node.role == worker] # Place on worker nodes
+#       restart_policy:
+#         condition: on-failure
+#       resources:
+#         limits:
+#           memory: 1G
+#         reservations:
+#           memory: 512M
+#   logstash:
+#     image: logstash:7.17.10
+#     ports:
+#       - "5044:5044" # Port for Beats input
+#       - "5000:5000/tcp" # Port for TCP input
+#       - "5000:5000/udp" # Port for UDP input
+#     environment:
+#       LS_JAVA_OPTS: "-Xms256m -Xmx256m" # Adjust heap size
+#     volumes:
+#       - ./logstash_data:/usr/share/logstash/data
+#     configs:
+#       - source: logstash_pipeline_config
+#         target: /usr/share/logstash/pipeline/logstash.conf
+#     networks:
+#       - backend-net
+#     depends_on:
+#       elasticsearch:
+#         condition: service_healthy
+#     deploy:
+#       replicas: 1
+#       placement:
+#         constraints: [node.role == worker] # Place on worker nodes
+#       restart_policy:
+#         condition: on-failure
+#       resources:
+#         limits:
+#           memory: 512M
+#         reservations:
+#           memory: 256M
+#   kibana:
+#     image: kibana:7.17.10
+#     ports:
+#       - "5601:5601" # UI port
+#     environment:
+#       ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
+#       # SERVER_NAME: kibana.example.com
+#       ELASTICSEARCH_SERVICEACCOUNTTOKEN: "false" # because we have not enabled x pack for elastic yet (for testing)
+#     networks:
+#       - backend-net
+#     depends_on:
+#       elasticsearch:
+#         condition: service_healthy
+#     deploy:
+#       replicas: 1
+#       placement:
+#         constraints: [node.role == worker] # Place on worker nodes
+#       restart_policy:
+#         condition: on-failure
+#       resources:
+#         limits:
+#           memory: 512M
+#         reservations:
+#           memory: 256M
+# #
+# #  # Monitoring - Prometheus (Data Store & Scraper)
+# #  prometheus:
+# #    image: prom/prometheus:v2.45.0 # Use a specific version
+# #    ports:
+# #      - "9090:9090" # Prometheus UI/API port
+# #    volumes:
+# #      - /data/prometheus:/prometheus # Persist data
+# #      # Mount the configuration file
+# #      - /path/on/host/prometheus.yml:/etc/prometheus/prometheus.yml # Option 1: Bind mount config
+# #    # Option 2: Use Docker Configs (Recommended for Swarm)
+# #    # configs:
+# #    #   - source: prometheus_config
+# #    #     target: /etc/prometheus/prometheus.yml
+# #    # command: # Command needed when using Docker Configs
+# #    #   - '--config.file=/etc/prometheus/prometheus.yml'
+# #    #   - '--storage.tsdb.path=/prometheus'
+# #    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+# #    #   - '--web.console.templates=/usr/share/prometheus/consoles'
+# #    networks:
+# #      - backend-net
+# #    deploy:
+# #      replicas: 1
+# #      placement:
+# #        constraints: [node.role == manager] # Often good to run on a manager
+# #      restart_policy:
+# #        condition: on-failure
+# #
+# #  # Monitoring - Grafana (UI)
+# #  grafana:
+# #    image: grafana/grafana:9.5.3 # Use a specific version
+# #    ports:
+# #      - "3000:3000" # Grafana UI port
+# #    volumes:
+# #      - /data/grafana_data:/var/lib/grafana
+
+# networks:
+#   backend-net:
+#     driver: overlay
+
+# configs:
+#   rabbitmq_config:
+#     external: true
+#   logstash_pipeline_config:
+#     file: ./logstash/pipeline/logstash.conf
+
+# secrets:
+#   db_connection_string:
+#     external: true
+version: "3.8"
+
 services:
-  userservice:
-    image: tqt0304/userservice:latest
+  apigateway:
+    image: tqt0304/apigateway:prod
+    ports:
+      - "8080:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
-    secrets:
-      # Grant the service access to the Swarm secret
-      - source: db_connection_string # Name of the secret IN SWARM
-        target: ConnectionStrings__UserServiceDb # Filename inside /run/secrets/. Matches AddKeyPerFile structure.
-    networks:
-      - backend-net
+      ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
+      AspNetCore__Environment: Production
+      ASPNETCORE_URLS: http://+:8080
+      JwtSettings__Secret: ${JWT_SECRET}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
     deploy:
       replicas: 2
-      placement:
-        constraints: [node.role == worker] # Place on worker nodes
-      update_config:
-        parallelism: 1
-        delay: 10s
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - backend-net
 
-  # Message Queue
+  eventservice:
+    image: tqt0304/eventservice:prod
+    ports:
+      - "8081:8081"
+    environment:
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_SYNCHRONIZE: false
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      PORT: 8081
+    depends_on:
+      - rabbitmq
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
+
+  userservice:
+    image: tqt0304/userservice:prod
+    ports:
+      - "8082:8082"
+    environment:
+      ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
+      AspNetCore__Environment: Production
+      JwtSettings__Secret: ${JWT_SECRET}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      ASPNETCORE_URLS: http://+:8082
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
+
+  venueservice:
+    image: tqt0304/venueservice:prod
+    ports:
+      - "8083:8083"
+    environment:
+      ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8083
+    depends_on:
+      - logstash
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
+
+  bookingservice:
+    image: tqt0304/bookingservice:prod
+    ports:
+      - "8084:8084"
+    environment:
+      ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8084
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    depends_on:
+      - rabbitmq
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
+
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
-    hostname: rabbitmq # Consistent hostname
+    hostname: rabbitmq_host
     ports:
-      - "15672:15672" # Management UI port
+      - "5672:5672"
+      - "15672:15672"
     volumes:
-      - ~/data_volume/rabbitmq_data:/var/lib/rabbitmq/ # Persist data
+      - rabbitmq_data:/var/lib/rabbitmq/
     configs:
       - source: rabbitmq_config
         target: /etc/rabbitmq/rabbitmq.conf
     networks:
       - backend-net
-    deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-      restart_policy:
-        condition: on-failure
-  # Logging - Elasticsearch (Data Store)
-  elasticsearch:
-    image: elasticsearch:7.17.10
-    environment:
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Adjust heap size
-    ulimits: # Required by Elasticsearch
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - ./elasticsearch_data:/usr/share/elasticsearch/data # Persist data using named volume
-    networks:
-      - backend-net
-    ports:
-      - "9200:9200" # API port
-    # this healthcheck ensures ES is ready before dependent services fully start actions
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -sf http://localhost:9200/_cluster/health || exit 1",
-        ]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 30s
     deploy:
-      replicas: 1
       placement:
-        constraints: [node.role == worker] # Place on worker nodes
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
-  logstash:
-    image: logstash:7.17.10
-    ports:
-      - "5044:5044" # Port for Beats input
-      - "5000:5000/tcp" # Port for TCP input
-      - "5000:5000/udp" # Port for UDP input
+        constraints:
+          - node.role == manager
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     environment:
-      LS_JAVA_OPTS: "-Xms256m -Xmx256m" # Adjust heap size
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     volumes:
-      - ./logstash_data:/usr/share/logstash/data
-    configs:
-      - source: logstash_pipeline_config
-        target: /usr/share/logstash/pipeline/logstash.conf
-    networks:
-      - backend-net
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role == worker] # Place on worker nodes
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-  kibana:
-    image: kibana:7.17.10
+      - es_data:/usr/share/elasticsearch/data
     ports:
-      - "5601:5601" # UI port
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200 # Points to the ES service name
-      # SERVER_NAME: kibana.example.com
-      ELASTICSEARCH_SERVICEACCOUNTTOKEN: "false" # because we have not enabled x pack for elastic yet (for testing)
+      - "9200:9200"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5001:5001"
+      - "9600:9600"
     networks:
       - backend-net
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      - elasticsearch
+    environment:
+      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - backend-net
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:9.5.3
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/provisioning/my-dashboards:/var/lib/grafana/provisioned_dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - backend-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  node_exporter:
+    image: prom/node-exporter:v1.6.1
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - backend-net
     deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role == worker] # Place on worker nodes
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-#
-#  # Monitoring - Prometheus (Data Store & Scraper)
-#  prometheus:
-#    image: prom/prometheus:v2.45.0 # Use a specific version
-#    ports:
-#      - "9090:9090" # Prometheus UI/API port
-#    volumes:
-#      - /data/prometheus:/prometheus # Persist data
-#      # Mount the configuration file
-#      - /path/on/host/prometheus.yml:/etc/prometheus/prometheus.yml # Option 1: Bind mount config
-#    # Option 2: Use Docker Configs (Recommended for Swarm)
-#    # configs:
-#    #   - source: prometheus_config
-#    #     target: /etc/prometheus/prometheus.yml
-#    # command: # Command needed when using Docker Configs
-#    #   - '--config.file=/etc/prometheus/prometheus.yml'
-#    #   - '--storage.tsdb.path=/prometheus'
-#    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-#    #   - '--web.console.templates=/usr/share/prometheus/consoles'
-#    networks:
-#      - backend-net
-#    deploy:
-#      replicas: 1
-#      placement:
-#        constraints: [node.role == manager] # Often good to run on a manager
-#      restart_policy:
-#        condition: on-failure
-#
-#  # Monitoring - Grafana (UI)
-#  grafana:
-#    image: grafana/grafana:9.5.3 # Use a specific version
-#    ports:
-#      - "3000:3000" # Grafana UI port
-#    volumes:
-#      - /data/grafana_data:/var/lib/grafana
+      mode: global
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    ports:
+      - "8085:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - backend-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  rabbitmq_data:
+  es_data:
 
 networks:
   backend-net:
@@ -171,10 +454,5 @@ networks:
 
 configs:
   rabbitmq_config:
-    external: true
-  logstash_pipeline_config:
-    file: ./logstash/pipeline/logstash.conf
+    file: ./configs/rabbitmq.conf
 
-secrets:
-  db_connection_string:
-    external: true
