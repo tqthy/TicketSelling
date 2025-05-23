@@ -192,18 +192,18 @@ jobs:
             export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
             export RABBITMQ_USER="${{ secrets.RABBITMQ_USER }}"
             export RABBITMQ_PASSWORD="${{ secrets.RABBITMQ_PASSWORD }}"
-            export RABBITMQ_HOST="rabbitmq" # Use service discovery name
-            export RABBITMQ_PORT="5672"
-            export DB_HOST="db_host_for_eventservice" # Replace with actual hostname or service name
-            export DB_PORT="5432" # Replace with actual port
-            export DB_USERNAME="${{ secrets.DB_USERNAME_EVENTSERVICE }}"
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD_EVENTSERVICE }}"
-            export DB_DATABASE="events" # Replace with actual DB name
-            export DB_SYNCHRONIZE="false"
-            export NODE_ENV="production"
-            export PORT="8081"
-            export IMAGE_TAG="${{ steps.meta.outputs.version }}"
-            export STACK_VERSION="8.13.4"
+            export RABBITMQ_HOST="${{ secrets.RABBITMQ_HOST }}"
+            export RABBITMQ_PORT="${{ secrets.RABBITMQ_PORT }}"
+            export DB_HOST="${{secrets.DB_HOST}}"
+            export DB_PORT="${{secrets.DB_PORT}}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export DB_DATABASE= "${{ secrets.DB_DATABASE}}"
+            export DB_SYNCHRONIZE= "${{ secrets.DB_SYNCHRONIZE}}"
+            export NODE_ENV= "${{ secrets.NODE_ENV}}"
+            export PORT= "${{ secrets.PORT}}"
+            export IMAGE_TAG= "${{ steps.meta.outputs.version }}"
+            export STACK_VERSION= "${{ secrets.STACK_VERSION}}"
 
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
