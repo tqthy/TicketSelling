@@ -170,10 +170,10 @@ jobs:
       
             # --- Environment Variables for Deployment ---
             export DEPLOY_IMAGE_TAG=latest
-            export APP_IMAGE_FULL_NAME=hub.docker.com/***/userservice:${DEPLOY_IMAGE_TAG}
+            # export APP_IMAGE_FULL_NAME=hub.docker.com/***/userservice:${DEPLOY_IMAGE_TAG}
             export STACK_NAME=my-prod-stack
             # Use the path where the file was copied by scp
-            export COMPOSE_FILE=/home/***/app/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
+            export COMPOSE_FILE=~/app/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
       
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
@@ -184,7 +184,7 @@ jobs:
             echo "--- Deploying Docker Stack Update using copied compose file ---"
             echo "Stack Name: ${STACK_NAME}"
             echo "Compose File: ${COMPOSE_FILE}" # This now points to the file copied via scp
-            echo "Using Image: ${APP_IMAGE_FULL_NAME}"
+            # echo "Using Image: ${APP_IMAGE_FULL_NAME}"
       
             # Deploy the stack using the compose file transferred from the repo
             docker stack deploy --compose-file ${COMPOSE_FILE} ${STACK_NAME} --with-registry-auth
