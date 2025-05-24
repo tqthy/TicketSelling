@@ -230,7 +230,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          DB_SYNCHRONIZE: false
+          DB_SYNCHRONIZE: "false"
           NODE_ENV: ${{ secrets.NODE_ENV }}
           PORT: ${{ secrets.PORT }}
           IMAGE_TAG: ${{ steps.meta.outputs.version }}
