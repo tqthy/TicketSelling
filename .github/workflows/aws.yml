@@ -159,68 +159,66 @@ jobs:
           # strip_components: 1 # Use if your source path includes directories you don't want on target
 
       # 5. Deploy Stack via SSH to Swarm Manager (using the copied file)
-      - name: Deploy Stack via SSH to Swarm Manager
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
-        env:
-            REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-            REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
         with:
-          host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
-          username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          envs: RDS_PASSWORD,RDS_USER,RDS_HOST,RDS_PORT,RDS_DB_NAME,REGISTRY_PASSWORD,REGISTRY_USER
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
             set -e # Exit script on first error
-
+      
             # --- Environment Variables for Deployment ---
-            export DEPLOY_IMAGE_TAG=${{ needs.build_and_push.outputs.image_tag }}
-            export APP_IMAGE_FULL_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${DEPLOY_IMAGE_TAG}
-            export STACK_NAME=${{ env.SWARM_STACK_NAME }}
+            export DEPLOY_IMAGE_TAG=latest
+            export APP_IMAGE_FULL_NAME=hub.docker.com/***/userservice:${DEPLOY_IMAGE_TAG}
+            export STACK_NAME=my-prod-stack
             # Use the path where the file was copied by scp
-            export COMPOSE_FILE=${{ env.COMPOSE_FILE_PATH_ON_MANAGER }} # e.g., /home/ec2-user/app/docker-compose.yml
-
-            # Environment variables for non-secret RDS config
-            export RDS_HOST_ENV="${RDS_HOST}"
-            export RDS_PORT_ENV="${RDS_PORT}"
-            export RDS_DB_NAME_ENV="${RDS_DB_NAME}"
-
-            export DB_USER_CONNECTION_STRING="${secrets.DB_USER_CONNECTION_STRING}"
-            export DB_VENUE_CONNECTION_STRING="${secrets.DB_VENUE_CONNECTION_STRING}"
-            export DB_BOOKING_CONNECTION_STRING="${secrets.DB_BOOKING_CONNECTION_STRING}"
-            export JWT_SECRET="${secrets.JWT_SECRET}"
-            export JWT_ISSUER="${secrets.JWT_ISSUER}"
-            export JWT_AUDIENCE="${secrets.JWT_AUDIENCE}"
-            export RABBITMQ_USER="${secrets.RABBITMQ_USER}"
-            export RABBITMQ_PASSWORD="${secrets.RABBITMQ_PASSWORD}"
-            export RABBITMQ_HOST="${secrets.RABBITMQ_HOST}"
-            export RABBITMQ_PORT="${secrets.RABBITMQ_PORT}"
-            export DB_HOST="${secrets.DB_HOST}"
-            export DB_PORT="${secrets.DB_PORT}"
-            export DB_USERNAME="${secrets.DB_USERNAME}"
-            export DB_PASSWORD="${secrets.DB_PASSWORD}"
-            export DB_DATABASE="${secrets.DB_DATABASE}"
-            export DB_SYNCHRONIZE="${secrets.DB_SYNCHRONIZE}"
-            export NODE_ENV="${secrets.NODE_ENV}"
-            export PORT="${secrets.PORT}"
-            export IMAGE_TAG="${steps.meta.outputs.version}"
-            export STACK_VERSION="${secrets.STACK_VERSION}"
-
+            export COMPOSE_FILE=/home/***/app/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
+      
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
-
+      
             echo "--- Logging into Docker Registry on Swarm Manager ---"
             echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
-
-            # echo "--- Managing Docker Secrets for RDS Credentials ---"
-            # echo "${RDS_PASSWORD}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_password - || echo "${RDS_PASSWORD}" | docker secret update rds_db_password -
-            # echo "${RDS_USER}" | docker secret create --label swarm-stack=${STACK_NAME} rds_db_user - || echo "${RDS_USER}" | docker secret update rds_db_user -
-
+      
             echo "--- Deploying Docker Stack Update using copied compose file ---"
             echo "Stack Name: ${STACK_NAME}"
             echo "Compose File: ${COMPOSE_FILE}" # This now points to the file copied via scp
             echo "Using Image: ${APP_IMAGE_FULL_NAME}"
-
+      
             # Deploy the stack using the compose file transferred from the repo
             docker stack deploy --compose-file ${COMPOSE_FILE} ${STACK_NAME} --with-registry-auth
-
+      
             echo "--- Deployment to Swarm on EC2 Completed ---"
+        env:
+          # Docker Registry Credentials
+          REGISTRY_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.DOCKER_HUB_TOKEN }}
+      
+          # RDS Non-Secret Config
+          RDS_HOST: ${{ secrets.RDS_HOST }}
+          RDS_PORT: ${{ secrets.RDS_PORT }}
+          RDS_DB_NAME: ${{ secrets.RDS_DB_NAME }}
+      
+          # Application Secrets passed as environment variables
+          DB_USER_CONNECTION_STRING: ${{ secrets.DB_USER_CONNECTION_STRING }}
+          DB_VENUE_CONNECTION_STRING: ${{ secrets.DB_VENUE_CONNECTION_STRING }}
+          DB_BOOKING_CONNECTION_STRING: ${{ secrets.DB_BOOKING_CONNECTION_STRING }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+          JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
+          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          RABBITMQ_HOST: ${{ secrets.RABBITMQ_HOST }}
+          RABBITMQ_PORT: ${{ secrets.RABBITMQ_PORT }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_SYNCHRONIZE: ${{ secrets.DB_SYNCHRONIZE }}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          PORT: ${{ secrets.PORT }}
+          IMAGE_TAG: ${{ steps.meta.outputs.version }}
+          STACK_VERSION: ${{ secrets.STACK_VERSION }}
