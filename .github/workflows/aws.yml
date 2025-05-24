@@ -174,7 +174,7 @@ jobs:
             # export APP_IMAGE_FULL_NAME=hub.docker.com/***/userservice:${DEPLOY_IMAGE_TAG}
             export STACK_NAME=my-prod-stack
             # Use the path where the file was copied by scp
-            export COMPOSE_FILE=/home/${EC2_SWARM_MANAGER_USER}/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
+            export COMPOSE_FILE=/home/${EC2_SWARM_MANAGER_USER}/app/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
       
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
