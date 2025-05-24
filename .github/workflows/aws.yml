@@ -179,21 +179,21 @@ jobs:
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
       
-            echo "--- Logging into Docker Registry on Swarm Manager ---"
-            # ======================= DEBUGGING BLOCK =======================
-            # The brackets [] will clearly show if the variable is empty.
-            echo "---"
-            echo "DEBUG: Checking variables right before login..."
-            echo "DEBUG: REGISTRY_USER value is [${REGISTRY_USER}]"
-            echo "---"
-            # ===================== END DEBUGGING BLOCK =====================
+            # echo "--- Logging into Docker Registry on Swarm Manager ---"
+            # # ======================= DEBUGGING BLOCK =======================
+            # # The brackets [] will clearly show if the variable is empty.
+            # echo "---"
+            # echo "DEBUG: Checking variables right before login..."
+            # echo "DEBUG: REGISTRY_USER value is [${REGISTRY_USER}]"
+            # echo "---"
+            # # ===================== END DEBUGGING BLOCK =====================
       
-            echo "--- Logging into Docker Registry on Swarm Manager ---"
-            if [ -z "${REGISTRY_USER}" ]; then
-            echo "ERROR: REGISTRY_USER is empty. Halting."
-            exit 1
-            fi
-            echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
+            # echo "--- Logging into Docker Registry on Swarm Manager ---"
+            # if [ -z "${REGISTRY_USER}" ]; then
+            # echo "ERROR: REGISTRY_USER is empty. Halting."
+            # exit 1
+            # fi
+            # echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
       
             echo "--- Deploying Docker Stack Update using copied compose file ---"
             echo "Stack Name: ${STACK_NAME}"
@@ -230,7 +230,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          DB_SYNCHRONIZE: ${{ secrets.DB_SYNCHRONIZE }}
+          DB_SYNCHRONIZE: false
           NODE_ENV: ${{ secrets.NODE_ENV }}
           PORT: ${{ secrets.PORT }}
           IMAGE_TAG: ${{ steps.meta.outputs.version }}
