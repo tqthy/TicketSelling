@@ -157,7 +157,33 @@ jobs:
           target: "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app" # Target directory on manager
           # Ensure target directory exists (create in SSH script below if needed)
           # strip_components: 1 # Use if your source path includes directories you don't want on target
-
+      
+      - name: Copy configs/rabbitmq.conf to Swarm Manager
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
+          username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "./scripts/configs/rabbitmq.conf" # Path to rabbitmq.conf in your repo
+          target: "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/configs" # Target directory on manager
+          
+      - name: Copy logstash directory to Swarm Manager
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
+          username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "./scripts/logstash" # Path to logstash directory in your repo
+          target: "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app" # Target base directory on manager
+        # 7. Copy monitoring directory to Swarm Manager
+      - name: Copy monitoring directory to Swarm Manager
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_SWARM_MANAGER_HOST }}
+          username: ${{ secrets.EC2_SWARM_MANAGER_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "./scripts/monitoring" # Path to monitoring directory in your repo
+          target: "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app" #
       # 5. Deploy Stack via SSH to Swarm Manager (using the copied file)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -175,10 +201,13 @@ jobs:
             export STACK_NAME=my-prod-stack
             # Use the path where the file was copied by scp
             export COMPOSE_FILE=/home/${EC2_SWARM_MANAGER_USER}/app/scripts/docker-compose.prod.yml # e.g., /home/***/app/docker-compose.yml
-      
+            
             echo "--- Ensuring target directory exists ---"
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
-      
+            mkdir -p "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/configs"
+            mkdir -p "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/logstash"
+            mkdir -p "/home/${{ secrets.EC2_SWARM_MANAGER_USER }}/app/monitoring"
+            
             # echo "--- Logging into Docker Registry on Swarm Manager ---"
             # # ======================= DEBUGGING BLOCK =======================
             # # The brackets [] will clearly show if the variable is empty.
