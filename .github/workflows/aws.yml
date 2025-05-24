@@ -20,102 +20,102 @@ jobs:
   #-------------------------
   # CI Job: Build & Push
   #-------------------------
-  build_and_push:
-    name: Build Docker Image and Push to Registry
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write # Required to push to GHCR
-
-    outputs:
-      image_tag: ${{ steps.meta.outputs.version }} # Pass the generated tag to deploy job
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3.4.0
-        with:
-          username: ${{ secrets.REGISTRY_USER }} # Use secret for username
-          password: ${{ secrets.REGISTRY_PASSWORD }} # Use secret for token/password
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          # images: ${{ env.IMAGE_NAME }}
-          images: |
-            tqt0304/apigateway
-            tqt0304/eventservice
-            tqt0304/userservice
-            tqt0304/venueservice
-            tqt0304/bookingservice
-          tags: |
-            # Use commit SHA for unique tagging (recommended)
-            type=sha,prefix=sha-
-            # Optionally, tag 'latest' on pushes to main branch
-            type=raw,value=latest,enable={{is_default_branch}}
-
+#  build_and_push:
+#    name: Build Docker Image and Push to Registry
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      packages: write # Required to push to GHCR
+#
+#    outputs:
+#      image_tag: ${{ steps.meta.outputs.version }} # Pass the generated tag to deploy job
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Log in to Container Registry
+#        uses: docker/login-action@v3.4.0
+#        with:
+#          username: ${{ secrets.REGISTRY_USER }} # Use secret for username
+#          password: ${{ secrets.REGISTRY_PASSWORD }} # Use secret for token/password
+#
+#      - name: Extract metadata (tags, labels) for Docker
+#        id: meta
+#        uses: docker/metadata-action@v5
+#        with:
+#          # images: ${{ env.IMAGE_NAME }}
+#          images: |
+#            tqt0304/apigateway
+#            tqt0304/eventservice
+#            tqt0304/userservice
+#            tqt0304/venueservice
+#            tqt0304/bookingservice
+#          tags: |
+#            # Use commit SHA for unique tagging (recommended)
+#            type=sha,prefix=sha-
+#            # Optionally, tag 'latest' on pushes to main branch
+#            type=raw,value=latest,enable={{is_default_branch}}
+#
+##      - name: Build and push Docker image (UserService)
+##        uses: docker/build-push-action@v5
+##        with:
+##          context: .
+##          file: ./UserService/Dockerfile
+##          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
+##          tags: ${{ steps.meta.outputs.tags }}
+##          labels: ${{ steps.meta.outputs.labels }}
+##          cache-from: type=gha
+##          cache-to: type=gha,mode=max
+#      - name: Build and push Docker image (EventService)
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: . # Note: Context is different as per your compose file
+#          file: ./EventService/Dockerfile
+#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+#          tags: tqt0304/eventservice:${{ steps.meta.outputs.version }}
+#          labels: ${{ steps.meta.outputs.labels }}
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+#
 #      - name: Build and push Docker image (UserService)
 #        uses: docker/build-push-action@v5
 #        with:
 #          context: .
 #          file: ./UserService/Dockerfile
-#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
-#          tags: ${{ steps.meta.outputs.tags }}
+#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+#          tags: tqt0304/userservice:${{ steps.meta.outputs.version }}
 #          labels: ${{ steps.meta.outputs.labels }}
 #          cache-from: type=gha
 #          cache-to: type=gha,mode=max
-      - name: Build and push Docker image (EventService)
-        uses: docker/build-push-action@v5
-        with:
-          context: . # Note: Context is different as per your compose file
-          file: ./EventService/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: tqt0304/eventservice:${{ steps.meta.outputs.version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (UserService)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./UserService/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: tqt0304/userservice:${{ steps.meta.outputs.version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (VenueService)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./VenueService/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: tqt0304/venueservice:${{ steps.meta.outputs.version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (BookingService)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./BookingService.Api/Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: tqt0304/bookingservice:${{ steps.meta.outputs.version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Echo Image Tag
-        run: echo "Built image tag"
+#
+#      - name: Build and push Docker image (VenueService)
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          file: ./VenueService/Dockerfile
+#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+#          tags: tqt0304/venueservice:${{ steps.meta.outputs.version }}
+#          labels: ${{ steps.meta.outputs.labels }}
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+#
+#      - name: Build and push Docker image (BookingService)
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          file: ./BookingService.Api/Dockerfile
+#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+#          tags: tqt0304/bookingservice:${{ steps.meta.outputs.version }}
+#          labels: ${{ steps.meta.outputs.labels }}
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+#
+#      - name: Echo Image Tag
+#        run: echo "Built image tag"
 
   #-------------------------------------
   # CD Job: Deploy to Swarm on EC2
@@ -123,7 +123,7 @@ jobs:
   deploy_to_swarm_on_ec2:
     name: Deploy to Docker Swarm on EC2
     runs-on: ubuntu-latest
-    needs: build_and_push # Depends on the build job
+#    needs: build_and_push # Depends on the build job
 
     # Only run this job on pushes to the main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -179,6 +179,19 @@ jobs:
             mkdir -p "$(dirname "${COMPOSE_FILE}")"
       
             echo "--- Logging into Docker Registry on Swarm Manager ---"
+            # ======================= DEBUGGING BLOCK =======================
+            # The brackets [] will clearly show if the variable is empty.
+            echo "---"
+            echo "DEBUG: Checking variables right before login..."
+            echo "DEBUG: REGISTRY_USER value is [${REGISTRY_USER}]"
+            echo "---"
+            # ===================== END DEBUGGING BLOCK =====================
+      
+            echo "--- Logging into Docker Registry on Swarm Manager ---"
+            if [ -z "${REGISTRY_USER}" ]; then
+            echo "ERROR: REGISTRY_USER is empty. Halting."
+            exit 1
+            fi
             echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin
       
             echo "--- Deploying Docker Stack Update using copied compose file ---"

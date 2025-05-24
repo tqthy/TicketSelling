@@ -182,7 +182,7 @@ version: "3.8"
 
 services:
   apigateway:
-    image: tqt0304/apigateway:prod
+    image: tqt0304/apigateway:latest
     ports:
       - "8080:8080"
     environment:
@@ -203,7 +203,7 @@ services:
       - backend-net
 
   eventservice:
-    image: tqt0304/eventservice:prod
+    image: tqt0304/eventservice:latest
     ports:
       - "8081:8081"
     environment:
@@ -230,7 +230,7 @@ services:
       - backend-net
 
   userservice:
-    image: tqt0304/userservice:prod
+    image: tqt0304/userservice:latest
     ports:
       - "8082:8082"
     environment:
@@ -248,7 +248,7 @@ services:
       - backend-net
 
   venueservice:
-    image: tqt0304/venueservice:prod
+    image: tqt0304/venueservice:latest
     ports:
       - "8083:8083"
     environment:
@@ -265,7 +265,7 @@ services:
       - backend-net
 
   bookingservice:
-    image: tqt0304/bookingservice:prod
+    image: tqt0304/bookingservice:latest
     ports:
       - "8084:8084"
     environment:
