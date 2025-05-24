@@ -192,8 +192,8 @@ jobs:
             echo "--- Deployment to Swarm on EC2 Completed ---"
         env:
           # Docker Registry Credentials
-          REGISTRY_USER: ${{ secrets.DOCKER_HUB_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.DOCKER_HUB_TOKEN }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       
           # RDS Non-Secret Config
           RDS_HOST: ${{ secrets.RDS_HOST }}
