@@ -348,27 +348,97 @@ function addCustomExamplesToSwagger(document: any) {
                 category: "MATCH",
                 startDateTime: "2025-07-15T18:00:00",
                 endDateTime: "2025-07-15T23:00:00",
-                venueId: "123e4567-e89b-12d3-a456-426614174000",
-                venueName: "Central Park Arena",
-                venueAddress: "123 Park Avenue, New York, NY 10001",
-                poster: "https://example.com/posters/summer-fest.jpg",
+                venueId: "3a117c8d-547b-4c57-9e4b-a0ec8310d775",
+                venueName: "Bernabeu Stadium",
+                venueAddress:
+                  "Av. de Concha Espina, 1, Chamartín, 28036 Madrid, Spain",
+                poster:
+                  "https://file3.qdnd.vn/data/images/0/2025/05/10/upload_2077/bar%20real.png?dpi=150&quality=100&w=870",
                 images: [
-                  "https://example.com/images/summer-fest-1.jpg",
-                  "https://example.com/images/summer-fest-2.jpg",
+                  "https://thethaovanhoa.mediacdn.vn/372676912336973824/2025/1/11/barcelonavrealmadrid-17365843337601610289429.jpg",
+                  "https://cdn-images.vtv.vn/zoom/640_400/66349b6076cb4dee98746cf1/2024/10/26/bai-chinh-ok-17297813512481076396404-50717891037070817875330-62446349527034870180071.jpg",
                 ],
                 details: "<p>Bring your own chairs and blankets</p>",
                 sectionPricing: [
                   {
-                    sectionId: "123e4567-e89b-12d3-a456-426614174001",
-                    price: 150.0,
+                    sectionId: "fc7ba2d4-8515-48ee-8c93-0964660e4715",
+                    price: 100,
                   },
                   {
-                    sectionId: "123e4567-e89b-12d3-a456-426614174002",
-                    price: 100.0,
+                    sectionId: "5bed2068-6ed3-42d0-8c56-61868164a604",
+                    price: 150,
                   },
                   {
-                    sectionId: "123e4567-e89b-12d3-a456-426614174003",
-                    price: 75.0,
+                    sectionId: "bfa1e26b-4242-4c44-9bfa-7141e0a7ce86",
+                    price: 200,
+                  },
+                  {
+                    sectionId: "87810aa5-995d-45cc-a3cb-d86c21e2f41f",
+                    price: 250,
+                  },
+                  {
+                    sectionId: "a23eb701-983e-439b-8f20-62a596679b2b",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d8b62761-6229-4146-af79-c880eb71ffe1",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d565fbdd-9fca-4bcb-b45f-a91afff324e2",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "f2849343-6faa-435c-807b-89e561e3daf3",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d55a040f-c015-463b-8fbc-490dea3751e0",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "115bfca1-02a4-4342-b697-bb55eaeee70b",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "70e61221-7fb1-4d15-a04b-e2669f0871ee",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "e39ac172-1474-4c5a-a054-f6a557a73973",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "e0c72a7d-6b2a-4bcd-9e72-97bc04c745fa",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "a288f6fb-61d1-4247-b3b5-5a1d30e43072",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "f431769c-5da9-41e2-afb6-b914c7e1fca5",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "9bf92447-1044-47f3-ab04-bd24e4708c39",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "292727a5-18df-4c51-8168-940c18b11962",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "67d30e8e-7050-4236-b2e1-4b37ba6ded80",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "364478ea-4c77-458c-8a27-b4034201d580",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "6cf6ddf6-b860-469e-9ed4-978051084bea",
+                    price: 150,
                   },
                 ],
               },
@@ -382,14 +452,92 @@ function addCustomExamplesToSwagger(document: any) {
                 category: "CONCERT",
                 startDateTime: "2025-08-20T19:00:00",
                 endDateTime: "2025-08-20T22:00:00",
-                venueId: "123e4567-e89b-12d3-a456-426614174000",
-                venueName: "Jazz Club",
-                venueAddress: "456 Music Street, New York, NY 10002",
-                poster: "https://example.com/posters/jazz-night.jpg",
+                venueId: "3a117c8d-547b-4c57-9e4b-a0ec8310d775",
+                venueName: "Bernabeu Stadium",
+                venueAddress:
+                  "Av. de Concha Espina, 1, Chamartín, 28036 Madrid, Spain",
+                poster:
+                  "https://file3.qdnd.vn/data/images/0/2025/05/10/upload_2077/bar%20real.png?dpi=150&quality=100&w=870",
                 sectionPricing: [
                   {
-                    sectionId: "123e4567-e89b-12d3-a456-426614174001",
-                    price: 50.0,
+                    sectionId: "fc7ba2d4-8515-48ee-8c93-0964660e4715",
+                    price: 100,
+                  },
+                  {
+                    sectionId: "5bed2068-6ed3-42d0-8c56-61868164a604",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "bfa1e26b-4242-4c44-9bfa-7141e0a7ce86",
+                    price: 200,
+                  },
+                  {
+                    sectionId: "87810aa5-995d-45cc-a3cb-d86c21e2f41f",
+                    price: 250,
+                  },
+                  {
+                    sectionId: "a23eb701-983e-439b-8f20-62a596679b2b",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d8b62761-6229-4146-af79-c880eb71ffe1",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d565fbdd-9fca-4bcb-b45f-a91afff324e2",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "f2849343-6faa-435c-807b-89e561e3daf3",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "d55a040f-c015-463b-8fbc-490dea3751e0",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "115bfca1-02a4-4342-b697-bb55eaeee70b",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "70e61221-7fb1-4d15-a04b-e2669f0871ee",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "e39ac172-1474-4c5a-a054-f6a557a73973",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "e0c72a7d-6b2a-4bcd-9e72-97bc04c745fa",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "a288f6fb-61d1-4247-b3b5-5a1d30e43072",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "f431769c-5da9-41e2-afb6-b914c7e1fca5",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "9bf92447-1044-47f3-ab04-bd24e4708c39",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "292727a5-18df-4c51-8168-940c18b11962",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "67d30e8e-7050-4236-b2e1-4b37ba6ded80",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "364478ea-4c77-458c-8a27-b4034201d580",
+                    price: 150,
+                  },
+                  {
+                    sectionId: "6cf6ddf6-b860-469e-9ed4-978051084bea",
+                    price: 150,
                   },
                 ],
               },
@@ -419,10 +567,11 @@ function addCustomExamplesToSwagger(document: any) {
                 description:
                   "A weekend of live music performances featuring top artists",
                 category: "CONCERT",
-                poster: "https://example.com/posters/summer-fest-updated.jpg",
+                poster:
+                  "https://file3.qdnd.vn/data/images/0/2025/05/10/upload_2077/bar%20real.png?dpi=150&quality=100&w=870",
                 images: [
-                  "https://example.com/images/summer-fest-updated-1.jpg",
-                  "https://example.com/images/summer-fest-updated-2.jpg",
+                  "https://thethaovanhoa.mediacdn.vn/372676912336973824/2025/1/11/barcelonavrealmadrid-17365843337601610289429.jpg",
+                  "https://cdn-images.vtv.vn/zoom/640_400/66349b6076cb4dee98746cf1/2024/10/26/bai-chinh-ok-17297813512481076396404-50717891037070817875330-62446349527034870180071.jpg",
                 ],
                 details:
                   "Bring your own chairs and blankets. Food vendors will be available.",
