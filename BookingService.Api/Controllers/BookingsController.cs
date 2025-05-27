@@ -53,15 +53,15 @@ public class BookingsController : ControllerBase
         var remoteIp = HttpContext.Connection.RemoteIpAddress;
         
         
-        if (remoteIp != null)
-        {
-            if (remoteIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {
-                remoteIp = Dns.GetHostEntry(remoteIp).AddressList.FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-            }
-
-            ipAddress = remoteIp != null ? remoteIp.ToString() : "127.0.0.1";
-        }
+        // if (remoteIp != null)
+        // {
+        //     if (remoteIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        //     {
+        //         remoteIp = Dns.GetHostEntry(remoteIp).AddressList.FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+        //     }
+        //
+        //     ipAddress = remoteIp != null ? remoteIp.ToString() : "127.0.0.1";
+        // }
         
         // Map API request DTO to Application Command
         var command = new CreateBookingCommand

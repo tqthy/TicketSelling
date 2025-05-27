@@ -88,9 +88,11 @@ namespace BookingService.Infrastructure.Repositories
             // Setting the state is often preferred if you know the entity is already tracked.
         }
 
-        public Task<IEnumerable<object>> GetBookingsByUserIdAsync(Guid requestUserId, CancellationToken cancellationToken)
+        public Task<List<Booking>> GetBookingsByUserIdAsync(Guid requestUserId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return  _context.Bookings.Where(b => b.UserId == requestUserId)
+                .Include(b => b.BookedSeats) // Eager load booked seats
+                .ToListAsync(cancellationToken);
         }
     }
 }

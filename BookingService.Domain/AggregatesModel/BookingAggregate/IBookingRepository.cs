@@ -14,6 +14,6 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         void Update(Booking booking);
         // SaveChanges might be part of a UnitOfWork pattern instead of each repository
         // Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-        Task<IEnumerable<object>> GetBookingsByUserIdAsync(Guid requestUserId, CancellationToken cancellationToken);
+        Task<List<Booking>> GetBookingsByUserIdAsync(Guid requestUserId, CancellationToken cancellationToken);
     }
 }

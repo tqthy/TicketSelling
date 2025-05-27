@@ -18,7 +18,7 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         public IReadOnlyCollection<BookedSeat> BookedSeats => _bookedSeats.AsReadOnly();
 
         // Private constructor for EF Core/persistence
-        private Booking() : base() { }
+        public Booking() : base() { }
 
         // Factory method or public constructor for creation
         public Booking(Guid userId, Guid eventId, decimal totalPrice, TimeSpan reservationDuration)
@@ -26,9 +26,13 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         {
             UserId = userId;
             EventId = eventId;
+            Status = BookingStatus.PendingPayment;
+            TotalPrice = totalPrice;
+            ExpiresAt = DateTime.UtcNow.Add(reservationDuration); 
             // Add domain event using the method from BaseEntity
             // AddDomainEvent(new BookingInitiatedDomainEvent( /* event details */ ));
         }
+        
 
 
         // Methods to manipulate aggregate state (Domain Logic)

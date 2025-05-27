@@ -3,7 +3,7 @@ using MediatR;
 
 namespace BookingService.Application.Features.Bookings.Queries;
 
-public class GetMyBookingsQuery : IRequest<List<BookingDto>>
+public class GetMyBookingsQuery : IRequest<List<GetMyBookingResponse>>
 {
     public Guid UserId { get; set; }
 }

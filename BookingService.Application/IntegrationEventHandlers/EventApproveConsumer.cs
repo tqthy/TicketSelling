@@ -30,39 +30,52 @@ namespace BookingService.Application.IntegrationEventHandlers
             _logger.LogInformation(
                 "Received EventApprovedIntegrationEvent for EventId: {EventId} with {SeatCount} seats",
                 message.EventId, message.Seats.Count);
+            var incomingSeatIds = message.Seats.Select(s => s.SeatId).ToList();
 
-            // Idempotency check: Ensure we haven't processed this event's seats already.
-            // This can be complex. A simple check might be to see if any seat status for this event already exists.
-            // A more robust check might involve storing processed event IDs or using a distributed lock if high concurrency is expected.
-            bool alreadyProcessed = await _dbContext.EventSeatStatuses
-                .AnyAsync(ess => ess.EventId == message.EventId && message.Seats.Any(seat => seat.SeatId == ess.SeatId),
-                    context.CancellationToken);
+            
+            var existingSeatIds = await _dbContext.EventSeatStatuses
+                .Where(ess => ess.EventId == message.EventId && incomingSeatIds.Contains(ess.SeatId))
+                .Select(ess => ess.SeatId)
+                .ToListAsync(context.CancellationToken);
+            
+            var newSeatsToCreate = message.Seats.Where(s => !existingSeatIds.Contains(s.SeatId));
 
-            if (alreadyProcessed)
-            {
-                _logger.LogWarning("Event {EventId} seat statuses might have been already processed. Skipping creation for provided seats.", message.EventId);
-                // Depending on strictness, you might only add non-existing ones or log and return.
-                // For this example, we'll create only if no matching seat for the event exists.
-                // A more fine-grained check per seat might be needed for partial processing.
-            }
-
-            var newSeatStatuses = new List<EventSeatStatus>();
-            foreach (var seat in message.Seats)
-            {
-                 // More precise idempotency: check if this specific seat for this event already exists
-                 var existingStatus = await _dbContext.EventSeatStatuses
-                    .FirstOrDefaultAsync(s => s.EventId == message.EventId && s.SeatId == seat.SeatId, context.CancellationToken);
-
-                 if (existingStatus == null)
-                 {
-                    newSeatStatuses.Add(new EventSeatStatus(message.EventId, seat.SeatId, seat.Price)); // Status defaults to 'Available'
-                 }
-                 else
-                 {
-                    _logger.LogInformation("Seat status for Event {EventId}, Seat {SeatId} already exists with status {Status}. Skipping.",
-                                           message.EventId, seat.SeatId, existingStatus.Status);
-                 }
-            }
+            var newSeatStatuses = newSeatsToCreate.Select(seat => 
+                new EventSeatStatus(message.EventId, seat.SeatId, seat.Price)
+            ).ToList();
+            
+            // // Idempotency check: Ensure we haven't processed this event's seats already.
+            // // This can be complex. A simple check might be to see if any seat status for this event already exists.
+            // // A more robust check might involve storing processed event IDs or using a distributed lock if high concurrency is expected.
+            // bool alreadyProcessed = await _dbContext.EventSeatStatuses
+            //     .AnyAsync(ess => ess.EventId == message.EventId && message.Seats.Any(seat => seat.SeatId == ess.SeatId),
+            //         context.CancellationToken);
+            //
+            // if (alreadyProcessed)
+            // {
+            //     _logger.LogWarning("Event {EventId} seat statuses might have been already processed. Skipping creation for provided seats.", message.EventId);
+            //     // Depending on strictness, you might only add non-existing ones or log and return.
+            //     // For this example, we'll create only if no matching seat for the event exists.
+            //     // A more fine-grained check per seat might be needed for partial processing.
+            // }
+            //
+            // var newSeatStatuses = new List<EventSeatStatus>();
+            // foreach (var seat in message.Seats)
+            // {
+            //      // More precise idempotency: check if this specific seat for this event already exists
+            //      var existingStatus = await _dbContext.EventSeatStatuses
+            //         .FirstOrDefaultAsync(s => s.EventId == message.EventId && s.SeatId == seat.SeatId, context.CancellationToken);
+            //
+            //      if (existingStatus == null)
+            //      {
+            //         newSeatStatuses.Add(new EventSeatStatus(message.EventId, seat.SeatId, seat.Price)); // Status defaults to 'Available'
+            //      }
+            //      else
+            //      {
+            //         _logger.LogInformation("Seat status for Event {EventId}, Seat {SeatId} already exists with status {Status}. Skipping.",
+            //                                message.EventId, seat.SeatId, existingStatus.Status);
+            //      }
+            // }
 
             if (newSeatStatuses.Any())
             {

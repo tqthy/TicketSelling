@@ -32,7 +32,7 @@ builder.Services.AddHttpClient<IVenueServiceApiClient, VenueServiceApiClient>(cl
     client.BaseAddress = new Uri("http://venueservice"); 
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
-builder.Services.AddHttpClient<IEventServiceApiClient, MockEventServiceApiClient>(client =>
+builder.Services.AddHttpClient<IEventServiceApiClient, EventServiceApiClient>(client =>
 {
     client.BaseAddress = new Uri("http://eventservice");
     client.DefaultRequestHeaders.Add("Accept", "application/json");

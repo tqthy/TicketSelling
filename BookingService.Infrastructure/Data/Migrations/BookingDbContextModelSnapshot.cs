@@ -98,6 +98,9 @@ namespace BookingService.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("ReservedUntil")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("SeatPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
