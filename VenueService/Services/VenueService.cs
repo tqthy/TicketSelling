@@ -28,6 +28,7 @@ namespace VenueService.Services
         public async Task<IEnumerable<VenueDto>> GetAllVenuesAsync()
         {
             // Use Select for projection directly in the query
+            _logger.LogInformation("Fetching all Venues from the database");
             return await _context.Venues
                 .AsNoTracking() // Read-only query, improves performance
                 .Select(v => new VenueDto // Manual Mapping (or use AutoMapper)
@@ -37,6 +38,13 @@ namespace VenueService.Services
                     Address = v.Address,
                     City = v.City,
                     OwnerUserId = v.OwnerUserId,
+                    Sections = v.Sections.Select(section => new SectionDto
+                    {
+                        SectionId = section.SectionId,
+                        VenueId = section.VenueId,
+                        Name = section.Name,
+                        Capacity = section.Capacity,
+                    }).ToList(),
                     CreatedAt = v.CreatedAt,
                     UpdatedAt = v.UpdatedAt
                 })
@@ -65,6 +73,14 @@ namespace VenueService.Services
                         VenueId = section.VenueId,
                         Name = section.Name,
                         Capacity = section.Capacity,
+                        Seats = section.Seats.Select(seat => new SeatDto
+                        {
+                            SeatId = seat.SeatId,
+                            SectionId = seat.SectionId,
+                            SeatNumber = seat.SeatNumber,
+                            RowNumber = seat.RowNumber,
+                            SeatInRow = seat.SeatInRow
+                        }).ToList(),
                     }).ToList(),
                     CreatedAt = v.CreatedAt,
                     UpdatedAt = v.UpdatedAt
