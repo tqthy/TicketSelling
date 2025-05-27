@@ -45,20 +45,33 @@ namespace VenueService.Services
 
         public async Task<VenueDto?> GetVenueByIdAsync(Guid id)
         {
-             return await _context.Venues
-                .AsNoTracking() // Read-only query
-                .Where(v => v.VenueId == id)
-                .Select(v => new VenueDto // Manual Mapping
+            // Use AsNoTracking for read-only queries
+            // Get venue and the associated sections if needed
+            _logger.LogInformation("Fetching Venue with ID {VenueId}", id);
+
+            var result = await (
+                from v in _context.Venues.AsNoTracking()
+                where v.VenueId == id
+                select new VenueDto // Manual Mapping
                 {
                     VenueId = v.VenueId,
                     Name = v.Name,
                     Address = v.Address,
                     City = v.City,
                     OwnerUserId = v.OwnerUserId,
+                    Sections = v.Sections.Select(section => new SectionDto
+                    {
+                        SectionId = section.SectionId,
+                        VenueId = section.VenueId,
+                        Name = section.Name,
+                        Capacity = section.Capacity,
+                    }).ToList(),
                     CreatedAt = v.CreatedAt,
                     UpdatedAt = v.UpdatedAt
-                })
-                .FirstOrDefaultAsync(); // Returns null if not found
+                }
+            ).FirstOrDefaultAsync();
+
+            return result;
         }
 
         public async Task<VenueDto> CreateVenueAsync(CreateVenueDto createVenueDto)
