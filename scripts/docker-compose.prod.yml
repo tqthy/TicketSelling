@@ -183,8 +183,7 @@ version: "3.8"
 services:
   apigateway:
     image: tqt0304/apigateway:latest
-    ports:
-      - "8080:8080"
+    # REMOVED the ports section. Traefik will manage access.
     environment:
       ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
       AspNetCore__Environment: Production
@@ -199,13 +198,26 @@ services:
       placement:
         constraints:
           - node.role == manager
+      # ADDED Traefik labels
+      labels:
+        - "traefik.enable=true"
+        # Tell Traefik to use our shared network to communicate
+        - "traefik.docker.network=traefik-net"
+        # Create a router for HTTPS traffic and set the domain
+        - "traefik.http.routers.apigateway.rule=Host(`api.ticketselling.thyqtran.id.vn`)"
+        - "traefik.http.routers.apigateway.entrypoints=websecure"
+        - "traefik.http.routers.apigateway.tls.certresolver=myresolver"
+        # Tell Traefik which port the apigateway container is listening on
+        - "traefik.http.services.apigateway.loadbalancer.server.port=8080"
     networks:
+      # Connect to our new shared network AND the existing backend network
+      - traefik-net
       - backend-net
 
   eventservice:
     image: tqt0304/eventservice:latest
-    ports:
-      - "8081:8081"
+#    ports:
+#      - "8081:8081"
     environment:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
@@ -231,8 +243,8 @@ services:
 
   userservice:
     image: tqt0304/userservice:latest
-    ports:
-      - "8082:8082"
+#    ports:
+#      - "8082:8082"
     environment:
       ConnectionStrings__UserServiceDb: ${DB_USER_CONNECTION_STRING}
       AspNetCore__Environment: Production
@@ -249,8 +261,8 @@ services:
 
   venueservice:
     image: tqt0304/venueservice:latest
-    ports:
-      - "8083:8083"
+#    ports:
+#      - "8083:8083"
     environment:
       ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Production
@@ -266,8 +278,8 @@ services:
 
   bookingservice:
     image: tqt0304/bookingservice:latest
-    ports:
-      - "8084:8084"
+#    ports:
+#      - "8084:8084"
     environment:
       ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Production
@@ -287,9 +299,9 @@ services:
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/
     configs:
@@ -451,6 +463,8 @@ volumes:
 networks:
   backend-net:
     driver: overlay
+  traefik-net:
+    external: true
 
 configs:
   rabbitmq_config:
