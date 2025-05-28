@@ -392,7 +392,7 @@ namespace VenueService.Services
         }
 
         // Helper mapping method 
-        private SectionDto MapSectionToDto(Section section, bool includeSeats)
+        private static SectionDto MapSectionToDto(Section section, bool includeSeats)
         {
              var sectionDto = new SectionDto
              {
@@ -407,7 +407,7 @@ namespace VenueService.Services
              return sectionDto;
         }
 
-        private SeatDto MapSeatToDto(Seat seat)
+        private static SeatDto MapSeatToDto(Seat seat)
         {
              return new SeatDto
              {
