@@ -20,102 +20,102 @@ jobs:
   #-------------------------
   # CI Job: Build & Push
   #-------------------------
-#  build_and_push:
-#    name: Build Docker Image and Push to Registry
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: read
-#      packages: write # Required to push to GHCR
-#
-#    outputs:
-#      image_tag: ${{ steps.meta.outputs.version }} # Pass the generated tag to deploy job
-#
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#
-#      - name: Log in to Container Registry
-#        uses: docker/login-action@v3.4.0
-#        with:
-#          username: ${{ secrets.REGISTRY_USER }} # Use secret for username
-#          password: ${{ secrets.REGISTRY_PASSWORD }} # Use secret for token/password
-#
-#      - name: Extract metadata (tags, labels) for Docker
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          # images: ${{ env.IMAGE_NAME }}
-#          images: |
-#            tqt0304/apigateway
-#            tqt0304/eventservice
-#            tqt0304/userservice
-#            tqt0304/venueservice
-#            tqt0304/bookingservice
-#          tags: |
-#            # Use commit SHA for unique tagging (recommended)
-#            type=sha,prefix=sha-
-#            # Optionally, tag 'latest' on pushes to main branch
-#            type=raw,value=latest,enable={{is_default_branch}}
-#
-##      - name: Build and push Docker image (UserService)
-##        uses: docker/build-push-action@v5
-##        with:
-##          context: .
-##          file: ./UserService/Dockerfile
-##          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
-##          tags: ${{ steps.meta.outputs.tags }}
-##          labels: ${{ steps.meta.outputs.labels }}
-##          cache-from: type=gha
-##          cache-to: type=gha,mode=max
-#      - name: Build and push Docker image (EventService)
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: . # Note: Context is different as per your compose file
-#          file: ./EventService/Dockerfile
-#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-#          tags: tqt0304/eventservice:${{ steps.meta.outputs.version }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Build and push Docker image (UserService)
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./UserService/Dockerfile
-#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-#          tags: tqt0304/userservice:${{ steps.meta.outputs.version }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Build and push Docker image (VenueService)
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./VenueService/Dockerfile
-#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-#          tags: tqt0304/venueservice:${{ steps.meta.outputs.version }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Build and push Docker image (BookingService)
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./BookingService.Api/Dockerfile
-#          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-#          tags: tqt0304/bookingservice:${{ steps.meta.outputs.version }}
-#          labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#
-#      - name: Echo Image Tag
-#        run: echo "Built image tag"
+  build_and_push:
+    name: Build Docker Image and Push to Registry
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required to push to GHCR
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }} # Pass the generated tag to deploy job
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3.4.0
+        with:
+          username: ${{ secrets.REGISTRY_USER }} # Use secret for username
+          password: ${{ secrets.REGISTRY_PASSWORD }} # Use secret for token/password
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # images: ${{ env.IMAGE_NAME }}
+          images: |
+            tqt0304/apigateway
+            tqt0304/eventservice
+            tqt0304/userservice
+            tqt0304/venueservice
+            tqt0304/bookingservice
+          tags: |
+            # Use commit SHA for unique tagging (recommended)
+            type=sha,prefix=sha-
+            # Optionally, tag 'latest' on pushes to main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image (UserService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./UserService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Push only on merge/push to main
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build and push Docker image (EventService)
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Note: Context is different as per your compose file
+          file: ./EventService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: tqt0304/eventservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (UserService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./UserService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: tqt0304/userservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (VenueService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./VenueService/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: tqt0304/venueservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (BookingService)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./BookingService.Api/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: tqt0304/bookingservice:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Echo Image Tag
+        run: echo "Built image tag"
 
   #-------------------------------------
   # CD Job: Deploy to Swarm on EC2
