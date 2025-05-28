@@ -22,8 +22,8 @@ public class PaymentProcessingService(IPaymentGateway paymentGateway, IPaymentRe
         if (serviceRequest.PaymentGateway == "VnPay") _paymentGateway = VnPayGateway.GetInstance(configuration, logger);
         
         var paymentUrl = await _paymentGateway.CreatePaymentUrl(serviceRequest);
-        
-        return "facebook.com";
+
+        return paymentUrl;
     }
     
     public async Task HandleWebhookResult(HttpContext httpContext, string paymentGateway)

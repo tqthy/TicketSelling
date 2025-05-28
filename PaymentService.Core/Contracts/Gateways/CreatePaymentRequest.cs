@@ -12,5 +12,6 @@ public class CreatePaymentRequest
     public string IpAddress { get; set; }
     public string Currency { get; set; }
     public DateTime CreateDate { get; set; }
+    public DateTime ExpireDate { get; set; }
 }
     

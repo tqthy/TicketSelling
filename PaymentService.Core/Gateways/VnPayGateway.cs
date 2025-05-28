@@ -65,7 +65,7 @@ public class VnPayGateway : IPaymentGateway
         vnpay.AddRequestData("vnp_ReturnUrl", vnp_Returnurl);
         // vnpay.AddRequestData("vnp_TxnRef", serviceRequest.OrderId.ToString());
         //Add Params of 2.1.0 Version
-        vnpay.AddRequestData("vnp_ExpireDate", serviceRequest.CreateDate.AddMinutes(15).ToString("yyyyMMddHHmmss"));
+        vnpay.AddRequestData("vnp_ExpireDate", serviceRequest.ExpireDate.ToString("yyyyMMddHHmmss"));
         //Billing
         // vnpay.AddRequestData("vnp_Bill_Mobile", txt_billing_mobile.Text.Trim());
         // vnpay.AddRequestData("vnp_Bill_Email", txt_billing_email.Text.Trim());
