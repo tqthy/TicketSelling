@@ -193,7 +193,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
       placement:
@@ -223,7 +223,7 @@ services:
     depends_on:
       - rabbitmq
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     networks:
@@ -241,7 +241,7 @@ services:
       JwtSettings__Audience: ${JWT_AUDIENCE}
       ASPNETCORE_URLS: http://+:8082
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     networks:
@@ -258,7 +258,7 @@ services:
     depends_on:
       - logstash
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     networks:
@@ -278,7 +278,7 @@ services:
     depends_on:
       - rabbitmq
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     networks:
