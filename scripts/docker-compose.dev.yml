@@ -54,6 +54,10 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       ASPNETCORE_URLS: http://+:8082
+      AWS__AccessKeyId: ${AWS_ACCESS_KEY_ID}
+      AWS__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+      AWS__Region: ${AWS_REGION}
+      AWS__BucketName: ${AWS_BUCKET_NAME}
     networks:
       - backend-net
   venueservice:
