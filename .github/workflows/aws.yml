@@ -117,7 +117,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Payment.Api/Dockerfile
+          file: ./PaymentService.Api/Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: tqt0304/paymentservice:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
