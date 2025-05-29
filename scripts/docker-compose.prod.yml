@@ -299,8 +299,6 @@ services:
     build:
       context: ../
       dockerfile: ./PaymentService.Api/Dockerfile
-    ports:
-      - "8085:8085"
     environment:
       ConnectionStrings__PaymentDb: ${DB_PAYMENT_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Production
@@ -309,8 +307,7 @@ services:
       RabbitMQ__Username: ${RABBITMQ_USER}
       RabbitMQ__Password: ${RABBITMQ_PASSWORD}
     depends_on:
-      rabbitmq:
-        condition: service_healthy
+      - rabbitmq
     deploy:
       replicas: 1
       restart_policy:
@@ -321,8 +318,6 @@ services:
     build:
       context: ../
       dockerfile: ./NotificationService/Dockerfile
-    ports:
-      - "8086:8086"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8086
@@ -330,8 +325,7 @@ services:
       RabbitMQ__Username: ${RABBITMQ_USER}
       RabbitMQ__Password: ${RABBITMQ_PASSWORD}
     depends_on:
-      rabbitmq:
-        condition: service_healthy
+      - rabbitmq
     deploy:
       replicas: 1
       restart_policy:
