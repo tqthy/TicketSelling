@@ -118,7 +118,7 @@ export class EventsService {
       );
     }
 
-    // event.status = EventStatus.PUBLISHED;
+    event.status = EventStatus.PUBLISHED;
     const savedEvent = await this.eventRepository.save(event);
     this.logger.log(`Event ${event.eventId} status updated to PUBLISHED`);
 
