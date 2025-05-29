@@ -66,11 +66,9 @@ namespace BookingService.Infrastructure.Repositories
             }
         }
 
-        public Task Update(EventSeatStatus seatStatus)
+        public void Update(EventSeatStatus seatStatus)
         {
             _context.EventSeatStatuses.Update(seatStatus);
-            _context.SaveChangesAsync();
-            return Task.CompletedTask; // Assuming SaveChangesAsync is handled by a UnitOfWork or similar pattern
         }
 
         public async Task UpdateSeatStatuses(Guid bookingId, List<Guid> seatIds, Guid eventId, string requestStatus)
