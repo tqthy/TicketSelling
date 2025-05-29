@@ -111,6 +111,24 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
              ReservedUntil = null;
              CurrentBookingId = null;
          }
+        
+        public void updateStatus(string status, DateTime? reservedUntil = null)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                throw new ArgumentException("Seat status cannot be empty.", nameof(status));
+            }
+
+            if (status == Status)
+            {
+                // Idempotency: No change needed
+                Console.WriteLine($"Warning: Attempted to update seat {SeatId} for event {EventId} to the same status '{Status}'. No change made.");
+                return;
+            }
+
+            Status = status;
+            ReservedUntil = reservedUntil;
+        }
 
 
         /// <summary>

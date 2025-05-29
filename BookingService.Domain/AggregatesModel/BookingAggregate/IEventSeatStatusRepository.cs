@@ -38,9 +38,10 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
         /// Marks an EventSeatStatus entity as modified in the Unit of Work.
         /// </summary>
         /// <param name="seatStatus">The entity to mark for update.</param>
-        void Update(EventSeatStatus seatStatus);
+        Task Update(EventSeatStatus seatStatus);
 
         // Note: SaveChangesAsync is typically handled by a Unit of Work pattern
         // coordinating changes across multiple repositories, so it's often not included here.
+        Task UpdateSeatStatuses(Guid bookingId, List<Guid> seatIds, Guid eventId ,string requestStatus);
     }
 }

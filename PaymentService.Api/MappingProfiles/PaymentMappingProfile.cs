@@ -10,5 +10,6 @@ public class PaymentMappingProfile : Profile
     {
         CreateMap<GetVnPayUrlDto, CreatePaymentRequest>()
             .ForMember(dest => dest.PaymentGateway, opt => opt.MapFrom(src => "VnPay"));
+        CreateMap<CreatePaymentRequestDto, CreatePaymentRequest>();
     }
 }

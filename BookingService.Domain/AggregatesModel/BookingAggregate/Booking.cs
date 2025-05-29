@@ -94,5 +94,30 @@ namespace BookingService.Domain.AggregatesModel.BookingAggregate
                 ExpiresAt = expiresAt
             };
         }
+
+        public void UpdateStatus(string requestStatus)
+        {
+            if (string.IsNullOrWhiteSpace(requestStatus))
+            {
+                throw new ArgumentException("Booking status cannot be empty.", nameof(requestStatus));
+            }
+            if (requestStatus == Status)
+            {
+                // Idempotency: No change needed
+                Console.WriteLine($"Warning: Attempted to update booking {Id} to the same status '{Status}'. No change made.");
+                return;
+            }
+            if (requestStatus == BookingStatus.Confirmed || requestStatus == BookingStatus.Failed)
+            {
+                // Only allow these statuses to be set from PendingPayment
+                if (Status != BookingStatus.PendingPayment)
+                {
+                    throw new InvalidOperationException($"Cannot update booking {Id} to '{requestStatus}' from status '{Status}'.");
+                }
+            }
+            
+            // Update the status
+            Status = requestStatus;
+        }
     }
 }

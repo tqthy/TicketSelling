@@ -19,7 +19,7 @@ namespace BookingService.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // Applied at controller level
+[Authorize]
 public class BookingsController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -173,6 +173,41 @@ public class BookingsController : ControllerBase
             return NotFound(new { message = "No seats found for the specified event." });
         }
         return Ok(result);
+    }
+    
+    [AllowAnonymous]
+    [HttpPatch("{bookingId}/status")]
+    public async Task<IActionResult> UpdateBookingStatus(
+        [FromRoute] Guid bookingId,
+        [FromBody] UpdateBookingStatusRequestDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var command = new UpdateBookingStatusCommand
+        {
+            BookingId = bookingId,
+            Status = request.Status
+        };
+
+        _logger.LogInformation("Dispatching UpdateBookingStatusCommand for Booking {BookingId}", bookingId);
+
+        var result = await _mediator.Send(command);
+        
+        if (result.Success)
+        {
+            return Ok(result.Status);
+        }
+        
+        if (result.ErrorMessage?.Contains("not found") ?? false)
+        {
+            return NotFound(new { message = result.ErrorMessage });
+        }
+        
+        _logger.LogError("UpdateBookingStatus command failed: {ErrorMessage}", result.ErrorMessage);
+        return StatusCode(StatusCodes.Status500InternalServerError, new { message = result.ErrorMessage });
     }
 }
 

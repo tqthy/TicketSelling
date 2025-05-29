@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using PaymentService.Api.MappingProfiles;
 using PaymentService.Api.Middleware;
 using PaymentService.Core.Consumers;
+using PaymentService.Core.Contracts;
 using PaymentService.Core.Contracts.Gateways;
 using PaymentService.Core.Contracts.Persistence;
 using PaymentService.Core.Gateways;
@@ -81,8 +82,13 @@ builder.Services.AddSwaggerGen(c =>
 //     });
 // });
 
+builder.Services.AddHttpClient<IBookingServiceClient, BookingServiceClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["BookingService:BaseUrl"]);
+});
+
 builder.Services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
-builder.Services.AddScoped<IPaymentGateway, VnPayGateway>();
+builder.Services.AddSingleton<IPaymentGateway, VnPayGateway>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 builder.Services.AddAutoMapper(typeof(PaymentMappingProfile));
