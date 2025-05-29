@@ -295,7 +295,49 @@ services:
         condition: on-failure
     networks:
       - backend-net
-
+  paymentservice:
+    build:
+      context: ../
+      dockerfile: ./PaymentService.Api/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      ConnectionStrings__PaymentDb: ${DB_PAYMENT_CONNECTION_STRING}
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8085
+      RabbitMQ__Host: ${RABBITMQ_HOST}
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
+  notificationservice:
+    build:
+      context: ../
+      dockerfile: ./NotificationService/Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8086
+      RabbitMQ__Host: ${RABBITMQ_HOST}
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend-net
   rabbitmq:
     image: rabbitmq:3.13.7-management-alpine
     hostname: rabbitmq_host

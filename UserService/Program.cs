@@ -74,8 +74,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+// builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("AWS")); 
 builder.Services.AddAWSService<IAmazonS3>();
+
 
 var app = builder.Build();
 

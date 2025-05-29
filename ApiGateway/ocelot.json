@@ -13,6 +13,18 @@
       "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ]
     },
     {
+      "DownstreamPathTemplate": "/S3PresignedUrl/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "userservice",
+          "Port": 8082
+        }
+      ],
+      "UpstreamPathTemplate": "/S3PresignedUrl/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ]
+    },
+    {
       "DownstreamPathTemplate": "/api/events/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
