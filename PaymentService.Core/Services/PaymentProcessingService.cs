@@ -19,7 +19,7 @@ public class PaymentProcessingService(IPaymentGateway paymentGateway, IPaymentRe
 
     public async Task<string> InitiatePaymentAsync(CreatePaymentRequest serviceRequest)
     {
-        if (serviceRequest.PaymentGateway == "VnPay") _paymentGateway = VnPayGateway.GetInstance(configuration, logger);
+        if (serviceRequest.PaymentGateway == "VnPay") _paymentGateway = new VnPayGateway(configuration, logger);
         
         var paymentUrl = await _paymentGateway.CreatePaymentUrl(serviceRequest);
 
@@ -28,7 +28,7 @@ public class PaymentProcessingService(IPaymentGateway paymentGateway, IPaymentRe
     
     public async Task HandleWebhookResult(HttpContext httpContext, string paymentGateway)
     {
-        if (paymentGateway == "VnPay") _paymentGateway = VnPayGateway.GetInstance(configuration, logger);
+        if (paymentGateway == "VnPay") _paymentGateway = new VnPayGateway(configuration, logger);
         
         
         await _paymentGateway.HandleWebhookResult(httpContext);

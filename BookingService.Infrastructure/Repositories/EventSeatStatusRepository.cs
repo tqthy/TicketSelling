@@ -66,10 +66,60 @@ namespace BookingService.Infrastructure.Repositories
             }
         }
 
-        public void Update(EventSeatStatus seatStatus)
+        public Task Update(EventSeatStatus seatStatus)
         {
             _context.EventSeatStatuses.Update(seatStatus);
+            _context.SaveChangesAsync();
+            return Task.CompletedTask; // Assuming SaveChangesAsync is handled by a UnitOfWork or similar pattern
         }
+
+        public async Task UpdateSeatStatuses(Guid bookingId, List<Guid> seatIds, Guid eventId, string requestStatus)
+        {
+            try
+            {
+                _logger.LogInformation("Updating seat statuses for Booking {BookingId}, Event {EventId}, Seats {SeatIds}",
+                    bookingId, eventId, string.Join(", ", seatIds));
+                foreach (var seatId in seatIds)
+                {
+                    // Find the seat status for the booked seat
+                    var seatStatus = _context.EventSeatStatuses
+                        .FirstOrDefault(s => s.EventId == eventId && s.SeatId == seatId);
+
+                    if (seatStatus != null)
+                    {
+                        // Update the status based on the booking request status
+                        if (requestStatus == SeatAvailabilityStatus.Reserved)
+                        {
+                            seatStatus.Reserve(bookingId, DateTime.UtcNow.AddMinutes(15)); // Example reservation time
+                        }
+                        else if (requestStatus == SeatAvailabilityStatus.Sold)
+                        {
+                            seatStatus.Sell(bookingId);
+                        }
+                        else if (requestStatus == SeatAvailabilityStatus.Available)
+                        {
+                            // If the status is set to Available, we might want to clear the booking ID and reserved time
+                            seatStatus.MakeAvailable(bookingId);
+                        }
+                        
+                        _context.EventSeatStatuses.Update(seatStatus);
+                        await _context.SaveChangesAsync(); 
+                    }
+                    else
+                    {
+                        _logger.LogWarning("EventSeatStatus not found for Event {EventId}, Seat {SeatId}", eventId,
+                            seatId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating seat statuses for Booking {BookingId}, Event {EventId}, Seats {SeatIds}",
+                    bookingId, eventId, string.Join(", ", seatIds));
+                throw; // Re-throw to allow transaction rollback
+            }
+        }
+
 
         // SaveChanges would likely be handled by a UnitOfWork coordinating across repositories
     }

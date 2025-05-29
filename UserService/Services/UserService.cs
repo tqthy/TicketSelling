@@ -72,7 +72,7 @@ public class UserService(
         var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not found."));
 
         // Define token expiration (e.g., 1 hour)
-        var tokenExpiry = DateTime.UtcNow.AddHours(1);
+        var tokenExpiry = DateTime.UtcNow.AddHours(24);
         
         // Prepare claims for the token payload
         var claims = new List<Claim>
