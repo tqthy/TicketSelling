@@ -18,8 +18,8 @@ services:
       - backend-net
   eventservice:
     build:
-      context: ../EventService
-      dockerfile: ./Dockerfile
+      context: ../
+      dockerfile: ./EventService/Dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -65,10 +65,11 @@ services:
     environment:
       ConnectionStrings__VenueDb: ${DB_VENUE_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development
+#      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
       ASPNETCORE_URLS: http://+:8083
-    depends_on:
-      logstash:
-        condition: service_healthy
+#    depends_on:
+#      logstash:
+#        condition: service_healthy
     networks:
       - backend-net
   bookingservice:
@@ -81,6 +82,41 @@ services:
       ConnectionStrings__BookingDb: ${DB_BOOKING_CONNECTION_STRING}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8084
+      RabbitMQ__Host: ${RABBITMQ_HOST}
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+  paymentservice:      
+    build:
+      context: ../
+      dockerfile: ./PaymentService.Api/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      ConnectionStrings__PaymentDb: ${DB_PAYMENT_CONNECTION_STRING}
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8085
+      RabbitMQ__Host: ${RABBITMQ_HOST}
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+  notificationservice:
+    build:
+      context: ../
+      dockerfile: ./NotificationService/Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8086
       RabbitMQ__Host: ${RABBITMQ_HOST}
       RabbitMQ__Username: ${RABBITMQ_USER}
       RabbitMQ__Password: ${RABBITMQ_PASSWORD}
@@ -108,183 +144,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    #      - ES_TMPDIR=/usr/share/elasticsearch/tmp_mounted
-    volumes:
-      - ./elasticsearch-data:/usr/share/elasticsearch/data
-    #      - ./mnt/es_temp_data:/usr/share/elasticsearch/tmp_mounted
-    ports:
-      - "9200:9200"
-    networks:
-      - backend-net
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -sf http://localhost:9200/_cluster/health || exit 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s # Give ES time to start up initially
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
-    volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-    ports:
-      - "5001:5001"
-      - "9600:9600"
-    networks:
-      - backend-net
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    environment:
-      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1"]
-      interval: 10s # Check every 10 seconds
-      timeout: 5s # Wait up to 5 seconds for a response
-      retries: 12 # Retry 12 times (total 2 minutes of retries after start_period)
-      start_period: 60s
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    networks:
-      - backend-net
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  # Monitoring - Prometheus (Data Store & Scraper)
-  #  prometheus:
-  #    image: prom/prometheus:v2.45.0 # Use a specific version
-  #    ports:
-  #      - "9090:9090" # Prometheus UI/API port
-  #    volumes:
-  #      - /data/prometheus:/prometheus # Persist data
-  #      # Mount the configuration file
-  #      - /path/on/host/prometheus.yml:/etc/prometheus/prometheus.yml # Option 1: Bind mount config
-  #    # Option 2: Use Docker Configs (Recommended for Swarm)
-  #    # configs:
-  #    #   - source: prometheus_config
-  #    #     target: /etc/prometheus/prometheus.yml
-  #    # command: # Command needed when using Docker Configs
-  #    #   - '--config.file=/etc/prometheus/prometheus.yml'
-  #    #   - '--storage.tsdb.path=/prometheus'
-  #    #   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-  #    #   - '--web.console.templates=/usr/share/prometheus/consoles'
-  #    networks:
-  #      - backend-net
-
-  # Monitoring - Prometheus (Data Store & Scraper)
-  prometheus:
-    image: prom/prometheus:v2.45.0
-    container_name: prometheus
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - backend-net
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:9090/-/healthy",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Monitoring - Grafana (UI)
-  #  grafana:
-  #    image: grafana/grafana:9.5.3 # Use a specific version
-  #    ports:
-  #      - "3000:3000" # Grafana UI port
-  #    volumes:
-  #      - /data/grafana_data:/var/lib/grafana
-  grafana:
-    image: grafana/grafana:9.5.3
-    container_name: grafana
-    environment:
-      GF_SECURITY_ADMIN_USER: "admin"
-      GF_SECURITY_ADMIN_PASSWORD: "admin"
-    volumes: # Add volume mounts for provisioning
-      - grafana_data:/var/lib/grafana # Persistent data
-      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      # Mount the directory containing the actual dashboard JSON files
-      - ./monitoring/grafana/provisioning/my-dashboards:/var/lib/grafana/provisioned_dashboards
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    networks:
-      - backend-net
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3000/api/health",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  #node_exporter scrapes host-level metrics on 9100
-  node_exporter:
-    image: prom/node-exporter:v1.6.1
-    container_name: node_exporter
-    command:
-      - "--path.rootfs=/host"
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/host:ro
-    ports:
-      - "9100:9100"
-    networks:
-      - backend-net
-    restart: unless-stopped
-
-  #cadvisor for monitoring container metrics
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.47.1
-    ports: # Map port 8080 with 8085 to avoid conflict with api gateway
-      - "8085:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - backend-net
-
 volumes:
   prometheus_data:
   grafana_data:
@@ -296,3 +155,151 @@ networks:
 configs:
   rabbitmq_config:
     file: ./configs/rabbitmq.conf
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#    #      - ES_TMPDIR=/usr/share/elasticsearch/tmp_mounted
+#    volumes:
+#      - ./elasticsearch-data:/usr/share/elasticsearch/data
+#    #      - ./mnt/es_temp_data:/usr/share/elasticsearch/tmp_mounted
+#    ports:
+#      - "9200:9200"
+#    networks:
+#      - backend-net
+#    healthcheck:
+#      test:
+#        [
+#          "CMD-SHELL",
+#          "curl -sf http://localhost:9200/_cluster/health || exit 1",
+#        ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 60s # Give ES time to start up initially
+#
+#  logstash:
+#    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+#    volumes:
+#      - ./logstash/pipeline:/usr/share/logstash/pipeline
+#    ports:
+#      - "5001:5001"
+#      - "9600:9600"
+#    networks:
+#      - backend-net
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#    environment:
+#      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -s --fail http://localhost:9600 || exit 1"]
+#      interval: 10s # Check every 10 seconds
+#      timeout: 5s # Wait up to 5 seconds for a response
+#      retries: 12 # Retry 12 times (total 2 minutes of retries after start_period)
+#      start_period: 60s
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+#    environment:
+#      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#    ports:
+#      - "5601:5601"
+#    networks:
+#      - backend-net
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 30s
+
+#  # Monitoring - Prometheus (Data Store & Scraper)
+#  prometheus:
+#    image: prom/prometheus:v2.45.0
+#    container_name: prometheus
+#    volumes:
+#      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#      - prometheus_data:/prometheus
+#    ports:
+#      - "9090:9090"
+#    networks:
+#      - backend-net
+#    healthcheck:
+#      test:
+#        [
+#          "CMD",
+#          "wget",
+#          "--no-verbose",
+#          "--tries=1",
+#          "--spider",
+#          "http://localhost:9090/-/healthy",
+#        ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#
+#  grafana:
+#    image: grafana/grafana:9.5.3
+#    container_name: grafana
+#    environment:
+#      GF_SECURITY_ADMIN_USER: "admin"
+#      GF_SECURITY_ADMIN_PASSWORD: "admin"
+#    volumes: # Add volume mounts for provisioning
+#      - grafana_data:/var/lib/grafana # Persistent data
+#      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+#      # Mount the directory containing the actual dashboard JSON files
+#      - ./monitoring/grafana/provisioning/my-dashboards:/var/lib/grafana/provisioned_dashboards
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - prometheus
+#    networks:
+#      - backend-net
+#    healthcheck:
+#      test:
+#        [
+#          "CMD",
+#          "wget",
+#          "--no-verbose",
+#          "--tries=1",
+#          "--spider",
+#          "http://localhost:3000/api/health",
+#        ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#
+#  #node_exporter scrapes host-level metrics on 9100
+#  node_exporter:
+#    image: prom/node-exporter:v1.6.1
+#    container_name: node_exporter
+#    command:
+#      - "--path.rootfs=/host"
+#    volumes:
+#      - /proc:/host/proc:ro
+#      - /sys:/host/sys:ro
+#      - /:/host:ro
+#    ports:
+#      - "9100:9100"
+#    networks:
+#      - backend-net
+#    restart: unless-stopped
+#
+#  #cadvisor for monitoring container metrics
+#  cadvisor:
+#    image: gcr.io/cadvisor/cadvisor:v0.47.1
+#    ports: # Map port 8080 with 8085 to avoid conflict with api gateway
+#      - "8085:8080"
+#    volumes:
+#      - /:/rootfs:ro
+#      - /var/run:/var/run:ro
+#      - /sys:/sys:ro
+#      - /var/lib/docker/:/var/lib/docker:ro
+#    networks:
+#      - backend-net
+
