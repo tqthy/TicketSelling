@@ -44,6 +44,11 @@ builder.Services.AddMassTransit(x =>
             // If it's direct/topic, you might need more specific binding configurations,
             // but for fanout, just configuring the endpoint to consume EmailNotificationRequested is usually enough.
             
+            e.Bind("email-notifications-exchange", x =>
+            {
+                x.ExchangeType = "fanout"; // Ensure the exchange type matches the publisher
+            });
+            
             e.UseMessageRetry(r => r.Interval(5, TimeSpan.FromSeconds(5)));
         });
     });
