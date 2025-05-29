@@ -37,9 +37,7 @@ namespace BookingService.Application.Features.Events.Queries
             _logger.LogInformation("Fetching available seats for EventId: {EventId}", request.EventId);
 
             var availableSeatStatuses = await _dbContext.EventSeatStatuses
-                .Where(ess => ess.EventId == request.EventId &&
-                              (ess.Status == SeatAvailabilityStatus.Available ||
-                               (ess.Status == SeatAvailabilityStatus.Reserved && ess.ReservedUntil < DateTime.UtcNow)))
+                .Where(ess => ess.EventId == request.EventId)
                 .AsNoTracking() // Good practice for read-only queries
                 .ToListAsync(cancellationToken);
 
