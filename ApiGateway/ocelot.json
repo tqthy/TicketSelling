@@ -32,7 +32,8 @@
 
       "AddHeadersToRequest": {
         "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
-        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value",
+        "X-User-Email": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress] > value"
       }
     },
     {
@@ -55,7 +56,8 @@
 
       "AddHeadersToRequest": {
         "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
-        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value",
+        "X-User-Email": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress] > value"
       }
     },
     {
@@ -76,7 +78,30 @@
 
       "AddHeadersToRequest": {
         "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
-        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value"
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value",
+        "X-User-Email": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress] > value"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "paymentservice",
+          "Port": 8085
+        }
+      ],
+      "UpstreamPathTemplate": "/api/payments/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put", "Delete" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+
+      "AddHeadersToRequest": {
+        "X-User-Id": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier] > value",
+        "X-User-Roles": "Claims[http://schemas.microsoft.com/ws/2008/06/identity/claims/role] > value",
+        "X-User-Email": "Claims[http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress] > value"
       }
     }
   ],

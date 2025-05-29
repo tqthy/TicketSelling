@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService.Api", "Payme
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService.Core", "PaymentService.Core\PaymentService.Core.csproj", "{B527637B-10A9-476A-AC20-E2145DB61EB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "NotificationService\NotificationService.csproj", "{EA908CF1-0086-4D6E-AA4C-1961A0B857F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,5 +68,9 @@ Global
 		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B527637B-10A9-476A-AC20-E2145DB61EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA908CF1-0086-4D6E-AA4C-1961A0B857F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA908CF1-0086-4D6E-AA4C-1961A0B857F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA908CF1-0086-4D6E-AA4C-1961A0B857F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA908CF1-0086-4D6E-AA4C-1961A0B857F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
