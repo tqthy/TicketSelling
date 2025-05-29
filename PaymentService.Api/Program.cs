@@ -78,7 +78,8 @@ builder.Services.AddMassTransit(x =>
         // Configure message types published by PaymentService (if any)
         cfg.Message<PaymentSucceeded>(m => m.SetEntityName("payment-succeeded-topic"));
         cfg.Publish<PaymentSucceeded>(p => p.ExchangeType = "fanout");
-        cfg.Message<EmailNotificationRequested>(m => m.SetEntityName("email-notifications"));
+        cfg.Message<EmailNotificationRequested>(m => m.SetEntityName("email-notifications-exchange")); //
+        cfg.Publish<EmailNotificationRequested>(p => p.ExchangeType = "fanout");
         // ... other published messages
     });
 });
@@ -92,7 +93,18 @@ builder.Services.AddScoped<IPaymentProcessingService, PaymentProcessingService>(
 builder.Services.AddSingleton<IPaymentGateway, VnPayGateway>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
+
 builder.Services.AddAutoMapper(typeof(PaymentMappingProfile));
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -108,6 +120,8 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "PaymentService API v1");
     });
 }
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 

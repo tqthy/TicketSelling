@@ -1,5 +1,7 @@
 using System.Net;
 using AutoMapper;
+using Common.Messages;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using PaymentService.Api.DTOs;
 using PaymentService.Core.Contracts;
@@ -18,13 +20,21 @@ public class PaymentsController : ControllerBase
    private readonly IPaymentProcessingService _paymentProcessingService;
    private readonly IMapper _mapper;
    private readonly IBookingServiceClient _bookingServiceClient;
-   public PaymentsController(ILogger<PaymentsController> logger, IConfiguration configuration, IMapper mapper, IPaymentProcessingService paymentProcessingService, IBookingServiceClient bookingServiceClient)
+   private readonly IPublishEndpoint _publishEndpoint; // Add this
+
+   public PaymentsController(ILogger<PaymentsController> logger, 
+      IConfiguration configuration, 
+      IMapper mapper, 
+      IPaymentProcessingService paymentProcessingService, 
+      IBookingServiceClient bookingServiceClient,
+      IPublishEndpoint publishEndpoint)
    {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
       _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
       _paymentProcessingService = paymentProcessingService;
       _bookingServiceClient = bookingServiceClient ?? throw new ArgumentNullException(nameof(bookingServiceClient));
+      _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint)); 
    }
    
    /// <summary>
@@ -77,6 +87,17 @@ public class PaymentsController : ControllerBase
          
          CreatePaymentRequest createPaymentRequest = _mapper.Map<CreatePaymentRequest>(request);
          _logger.LogDebug("Creating payment request: {@CreatePaymentRequest}", createPaymentRequest);
+         
+         // Send Email Notification
+         var emailNotification = new EmailNotificationRequested(
+            ToEmail: request.Email, // Assuming the DTO has the user's email
+            Subject: "Payment Successful",
+            Body: $"Dear {request.FullName ?? "Customer"},<br><br>Your payment for booking ID {request.BookingId} was successful.<br><br>Thank you for your purchase!<br><br>Best regards,<br>TicketSelling Platform",
+            IsHtmlBody: true
+         );
+
+         await _publishEndpoint.Publish(emailNotification);
+         _logger.LogInformation("EmailNotificationRequested event published for BookingId: {BookingId}", request.BookingId);
          
          _logger.LogInformation("Payment initiated for card: {CardNumber}", request.CardNumber);
          return await Task.FromResult<IActionResult>(Ok("Payment successfully initiated."));
