@@ -262,4 +262,23 @@ public class UserService(
         var result = await _userManager.ConfirmEmailAsync(user, token);
         return result.Succeeded;
     }
+
+    public async Task<string?> RequestPasswordResetAsync(PasswordResetRequestDto dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
+            return null;
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetLink = $"localhost:5106/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+        return resetLink;
+    }
+
+    public async Task<bool> ResetPasswordAsync(PasswordResetDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(dto.UserId);
+        if (user == null)
+            return false;
+        var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+        return result.Succeeded;
+    }
 }

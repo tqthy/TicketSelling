@@ -90,6 +90,29 @@ public class AuthController : ControllerBase
         return BadRequest(new { Message = "Invalid or expired confirmation link." });
     }
 
+    [HttpPost("request-password-reset")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] PasswordResetRequestDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        var resetLink = await _userService.RequestPasswordResetAsync(dto);
+        if (resetLink == null)
+            return NotFound(new { Message = "User with this email does not exist." });
+        
+        return Ok(new { Message = "Password reset link generated.", ResetLink = resetLink });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] PasswordResetDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        var result = await _userService.ResetPasswordAsync(dto);
+        if (!result)
+            return BadRequest(new { Message = "Invalid token or user ID, or password does not meet requirements." });
+        return Ok(new { Message = "Password has been reset successfully." });
+    }
+
     // [HttpPost("logout")] // Route: POST api/auth/logout
     // public IActionResult Logout()
     // {

@@ -12,4 +12,6 @@ public interface IUserService
     Task<UserDto?> GetUserByIdAsync(Guid id);
     Task<RefreshTokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
     Task<bool> ConfirmEmailAsync(string userId, string token);
+    Task<string?> RequestPasswordResetAsync(PasswordResetRequestDto dto);
+    Task<bool> ResetPasswordAsync(PasswordResetDto dto);
 }
