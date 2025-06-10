@@ -9,6 +9,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         : base(options)
     {
     }
-    
-    
+
+    public DbSet<UserService.Models.RefreshToken> RefreshTokens { get; set; }
 }

@@ -10,4 +10,6 @@ public interface IUserService
     Task<UserDto?> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto);
     Task<bool> DeleteUserAsync(Guid id);
     Task<UserDto?> GetUserByIdAsync(Guid id);
+    Task<RefreshTokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
+    Task<bool> ConfirmEmailAsync(string userId, string token);
 }

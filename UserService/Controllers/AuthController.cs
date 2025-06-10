@@ -32,7 +32,12 @@ public class AuthController : ControllerBase
         }
 
         // Return 201 created for registration, maybe with the success message
-        return CreatedAtAction("GetUserByIdAsync", "User", new { id = result.UserId }, new { result.Message });
+        return CreatedAtAction(
+            "GetUserByIdAsync",
+            "User",
+            new { id = result.UserId },
+            new { result.Message, result.EmailConfirmationLink }
+        );
     }
 
     [HttpPost("login")] // Route: POST api/auth/login
@@ -52,6 +57,44 @@ public class AuthController : ControllerBase
         }
 
         // Return the token upon successful login
-        return Ok(new { result.Token, result.Expiration });
+        return Ok(new { result.Token, result.Expiration, result.RefreshToken });
     }
+
+    [HttpPost("refresh-token")] // Route: POST api/auth/refresh-token
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        var result = await _userService.RefreshTokenAsync(request);
+        if (result == null)
+        {
+            return Unauthorized(new { Message = "Invalid or expired refresh token." });
+        }
+        return Ok(result);
+    }
+
+    [HttpGet("confirm-email")] // Route: GET api/auth/confirm-email
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+        {
+            return BadRequest(new { Message = "UserId and token are required." });
+        }
+        var result = await _userService.ConfirmEmailAsync(userId, token);
+        if (result)
+        {
+            return Ok(new { Message = "Email confirmed successfully." });
+        }
+        return BadRequest(new { Message = "Invalid or expired confirmation link." });
+    }
+
+    // [HttpPost("logout")] // Route: POST api/auth/logout
+    // public IActionResult Logout()
+    // {
+    //     // For JWT, logout is typically handled client-side by removing the token.
+    //     // If you have server-side session management, you can clear the session here.
+    //     return Ok(new { Message = "Logged out successfully." });
+    // }
 }
