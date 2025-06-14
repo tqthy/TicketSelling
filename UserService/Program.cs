@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Data;
+using UserService.ExceptionHandlers;
 using UserService.Mappings;
 using UserService.Services;
 
@@ -77,7 +78,10 @@ builder.Services.AddCors(options =>
 // builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("AWS")); 
 builder.Services.AddAWSService<IAmazonS3>();
-
+builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<ConflictExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -106,6 +110,7 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseExceptionHandler();
 
 app.MapControllers();
 

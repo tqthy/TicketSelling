@@ -98,7 +98,7 @@ public class AuthController : ControllerBase
         var resetLink = await _userService.RequestPasswordResetAsync(dto);
         if (resetLink == null)
             return NotFound(new { Message = "User with this email does not exist." });
-        
+
         return Ok(new { Message = "Password reset link generated.", ResetLink = resetLink });
     }
 

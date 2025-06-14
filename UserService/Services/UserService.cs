@@ -195,7 +195,7 @@ public class UserService(
         var existingToken = _dbContext.RefreshTokens.FirstOrDefault(rt => rt.Token == request.RefreshToken);
         if (existingToken == null || existingToken.IsRevoked || existingToken.IsUsed || existingToken.Expires < DateTime.UtcNow)
         {
-            return null; 
+            return null;
         }
 
         // Mark the old refresh token as used
