@@ -1,5 +1,8 @@
 using System.Text;
 using Amazon.S3;
+using Google.Apis.Auth.AspNetCore3;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +65,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// builder.Services
+//     .AddAuthentication(o =>
+//     {
+//         // Use Google as the default challenge and forbid scheme for OAuth2
+//         o.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+//         o.DefaultForbidScheme = GoogleDefaults.AuthenticationScheme;
+//         o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//     })
+//     .AddCookie(options =>
+//     {
+//         options.Cookie.SameSite = SameSiteMode.None;
+//         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+//     })
+//     .AddGoogle(options =>
+//     {
+//         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+//         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+//         options.Scope.Add("email");
+//         options.Scope.Add("profile");
+//         options.SaveTokens = true;
+//     });
+
+builder.Services.AddAuthentication(o =>
+    {
+        o.DefaultScheme = "Application";
+        o.DefaultSignInScheme = "External";
+    })
+    .AddCookie("Application")
+    .AddCookie("External")
+    .AddGoogle(o =>
+    {
+        o.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+        o.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+        
+        // o.CallbackPath = "/api/auth/google-callback";
+    });
+
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserService, UserService.Services.UserService>(); 
 
@@ -107,6 +147,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

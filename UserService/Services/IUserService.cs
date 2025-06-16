@@ -14,4 +14,5 @@ public interface IUserService
     Task<bool> ConfirmEmailAsync(string userId, string token);
     Task<string?> RequestPasswordResetAsync(PasswordResetRequestDto dto);
     Task<bool> ResetPasswordAsync(PasswordResetDto dto);
+    Task<AuthResponseDto> RegisterWithGoogleAsync(string email, string firstName, string lastName);
 }

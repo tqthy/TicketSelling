@@ -281,4 +281,79 @@ public class UserService(
         var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
         return result.Succeeded;
     }
+
+    public async Task<AuthResponseDto> RegisterWithGoogleAsync(string email, string firstName, string lastName)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            return new AuthResponseDto { IsSuccess = false, Message = "User already exists with this email." };
+        }
+
+        var newUser = new ApplicationUser
+        {
+            UserName = email, // Use email as username for Google users
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            EmailConfirmed = true // Google users are considered confirmed
+        };
+
+        var result = await _userManager.CreateAsync(newUser);
+        if (!result.Succeeded)
+        {
+            return new AuthResponseDto { IsSuccess = false, Message = string.Join(", ", result.Errors.Select(e => e.Description)) };
+        }
+
+        // Assign default role 'User'
+        await _userManager.AddToRoleAsync(newUser, "User");
+
+        // Generate JWT and refresh token
+        var token = GenerateJwtToken(newUser);
+        var refreshToken = GenerateRefreshToken();
+        var refreshTokenEntity = new RefreshToken
+        {
+            Token = refreshToken,
+            UserId = newUser.Id,
+            Expires = DateTime.UtcNow.AddDays(7),
+            Created = DateTime.UtcNow
+        };
+        _dbContext.RefreshTokens.Add(refreshTokenEntity);
+        await _dbContext.SaveChangesAsync();
+
+        return new AuthResponseDto
+        {
+            IsSuccess = true,
+            Token = token,
+            Expiration = DateTime.UtcNow.AddHours(24),
+            UserId = newUser.Id,
+            RefreshToken = refreshToken
+        };
+    }
+
+    private string GenerateJwtToken(ApplicationUser user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not found."));
+        var tokenExpiry = DateTime.UtcNow.AddHours(24);
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        };
+        var roles = _userManager.GetRolesAsync(user).Result;
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = tokenExpiry,
+            Issuer = jwtSettings["Issuer"],
+            Audience = jwtSettings["Audience"],
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
 }
