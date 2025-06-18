@@ -4,7 +4,7 @@ This is a comprehensive, microservices-based platform for selling event tickets.
 
 ## Features
 
-* **User Management:** Handles user registration, authentication, and profile management with role-based access control (Admin, Organizer, User).
+* **User Management:** Handles user registration, authentication (including Google OAuth), and profile management with role-based access control (Admin, Organizer, User).
 * **Event Management:** Allows organizers to create, manage, and publish events. It includes a status workflow for events (Draft, Pending Approval, Published, etc.).
 * **Venue Management:** Provides functionalities to create and manage venues, including sections and seats.
 * **Booking System:** Enables users to book tickets for events, with real-time seat availability checks.
