@@ -9,6 +9,7 @@ using PaymentService.Core.Consumers;
 using PaymentService.Core.Contracts;
 using PaymentService.Core.Contracts.Gateways;
 using PaymentService.Core.Contracts.Persistence;
+using PaymentService.Core.Extensions;
 using PaymentService.Core.Gateways;
 using PaymentService.Core.Persistence;
 using PaymentService.Core.Persistence.Repositories;
@@ -89,9 +90,12 @@ builder.Services.AddHttpClient<IBookingServiceClient, BookingServiceClient>(clie
     client.BaseAddress = new Uri(builder.Configuration["BookingService:BaseUrl"]);
 });
 
+// Register payment services
 builder.Services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
-builder.Services.AddSingleton<IPaymentGateway, VnPayGateway>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+
+// Register payment gateways
+builder.Services.AddPaymentGateways(builder.Configuration);
 
 
 builder.Services.AddAutoMapper(typeof(PaymentMappingProfile));
