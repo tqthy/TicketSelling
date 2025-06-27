@@ -2,9 +2,16 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Specialized;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PaymentService.Core.Contracts.Gateways;
+using PaymentService.Core.Contracts.Persistence;
+using PaymentService.Core.Entities;
 using PaymentService.Core.Exceptions;
 using VNPAY.NET;
 using VNPAY.NET.Enums;
@@ -88,13 +95,13 @@ public class VnPayGateway : BasePaymentGateway
 
     public override async Task HandleWebhookResult(HttpContext httpContext)
     {
+        if (httpContext == null)
+            throw new ArgumentNullException(nameof(httpContext));
+
+        Logger.LogInformation("Processing VNPay webhook callback");
+        
         try
         {
-            if (httpContext == null)
-                throw new ArgumentNullException(nameof(httpContext));
-
-            Logger.LogInformation("Processing VNPay webhook callback");
-            
             // Extract and validate VNPay response parameters
             var vnpResponse = new VnPayResponse(httpContext.Request.Query);
             
@@ -105,37 +112,113 @@ public class VnPayGateway : BasePaymentGateway
                 throw new PaymentGatewayValidationException("Invalid payment callback signature", GatewayName, "INVALID_SIGNATURE");
             }
 
+            // Get the payment repository from the service provider
+            var serviceProvider = httpContext.RequestServices;
+            var paymentRepository = serviceProvider.GetRequiredService<IPaymentRepository>();
+            
+            // Find the payment by the transaction reference (vnp_TxnRef)
+            // Note: You might need to adjust this based on how you're storing the transaction reference
+            var transactionRef = vnpResponse.OrderId;
+            if (string.IsNullOrEmpty(transactionRef))
+            {
+                Logger.LogError("VNPay response is missing transaction reference (vnp_TxnRef)");
+                throw new PaymentGatewayValidationException("Missing transaction reference", GatewayName, "MISSING_TRANSACTION_REF");
+            }
+
+            // In a real implementation, you would need to retrieve the payment by its reference
+            // This is a simplified example - you'll need to implement the actual lookup logic
+            var payment = await GetPaymentByReferenceAsync(transactionRef, paymentRepository);
+            
+            if (payment == null)
+            {
+                Logger.LogError("Payment not found for transaction reference: {TransactionRef}", transactionRef);
+                throw new PaymentGatewayValidationException("Payment not found", GatewayName, "PAYMENT_NOT_FOUND");
+            }
+
+            
+
             // Process the payment status
             if (vnpResponse.ResponseCode == "00")
             {
                 // Payment successful
-                // TODO: Update your payment record in the database
+                payment.MarkAsSucceeded(vnpResponse.TransactionId, GatewayName);
                 Logger.LogInformation("VNPay payment successful for transaction: {TransactionId}", vnpResponse.TransactionId);
             }
             else
             {
                 // Payment failed
-                Logger.LogWarning("VNPay payment failed. Response code: {ResponseCode}, Message: {Message}", 
-                    vnpResponse.ResponseCode, vnpResponse.Message);
-                throw new PaymentGatewayException(
-                    $"Payment failed. {vnpResponse.Message}",
-                    vnpResponse.ResponseCode,
-                    GatewayName);
+                var errorMessage = $"VNPay payment failed. Response code: {vnpResponse.ResponseCode}, Message: {vnpResponse.Message}";
+                payment.MarkAsFailed(errorMessage, vnpResponse.TransactionId, GatewayName);
+                Logger.LogWarning("VNPay payment failed for transaction: {TransactionId}. {ErrorMessage}", 
+                    vnpResponse.TransactionId, errorMessage);
             }
+
+            
+            // Create a new payment attempt
+            var attempt = new PaymentAttempt(
+                payment.Id,
+                GatewayName,
+                true,
+                vnpResponse.TransactionId,
+                vnpResponse.ResponseCode,
+                vnpResponse.Message);
+            // Add the attempt and update the payment
+            payment.AddAttempt(attempt);
+            await paymentRepository.UpdateAsync(payment);
             
             // Return a success response to VNPay
-            await httpContext.Response.WriteAsync("{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}");
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "00",
+                Message = "Confirm success"
+            });
         }
-        catch (PaymentGatewayException)
+        catch (PaymentGatewayException ex)
         {
-            throw;
+            Logger.LogError(ex, "Error processing VNPay webhook: {Message}", ex.Message);
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "99",
+                Message = $"Error: {ex.Message}"
+            });
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing VNPay webhook callback");
+            Logger.LogError(ex, "Unexpected error processing VNPay webhook");
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "99",
+                Message = "Internal server error"
+            });
+        }
+    }
+    
+    private async Task<Payment?> GetPaymentByReferenceAsync(string transactionRef, IPaymentRepository paymentRepository)
+    {
+        if (string.IsNullOrWhiteSpace(transactionRef))
+        {
+            Logger.LogWarning("Transaction reference is null or empty");
+            return null;
+        }
+
+        try
+        {
+            // Use the repository to find the payment by transaction reference
+            var payment = await paymentRepository.GetByTransactionReferenceAsync(transactionRef);
+            
+            if (payment == null)
+            {
+                Logger.LogWarning("Payment not found for transaction reference: {TransactionRef}", transactionRef);
+            }
+            
+            return payment;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error retrieving payment for transaction reference: {TransactionRef}", transactionRef);
             throw new PaymentGatewayException(
-                "An error occurred while processing payment callback. Please check the logs for details.",
-                "CALLBACK_PROCESSING_FAILED",
+                "An error occurred while retrieving payment information",
+                "PAYMENT_RETRIEVAL_ERROR",
                 GatewayName,
                 true, // Mark as transient
                 ex);
@@ -177,16 +260,32 @@ public class VnPayResponse
 
     public bool IsValid(string hashSecret)
     {
-        if (string.IsNullOrEmpty(SecureHash) || string.IsNullOrEmpty(hashSecret))
+        if (string.IsNullOrEmpty(hashSecret))
+            throw new ArgumentException("Hash secret cannot be null or empty", nameof(hashSecret));
+
+        if (string.IsNullOrEmpty(SecureHash))
             return false;
 
-        // TODO: Implement hash validation logic here
-        // This should validate the SecureHash using the hashSecret
-        // and the query parameters
+        // Get all query parameters except vnp_SecureHash and vnp_SecureHashType
+        var queryParams = _query
+            .Where(kv => !string.IsNullOrEmpty(kv.Value) && 
+                       !kv.Key.Equals("vnp_SecureHash", StringComparison.OrdinalIgnoreCase) &&
+                       !kv.Key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-        // For now, return true to indicate validation passed
-        // In production, you should implement proper hash validation
-        return true;
+        // Create the input string for hashing
+        var signData = string.Join("&", queryParams
+            .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+
+        // Compute the HMAC-SHA512 hash
+        using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(hashSecret));
+        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(signData));
+        var computedHash = BitConverter.ToString(hashBytes)
+            .Replace("-", "")
+            .ToLower();
+
+        // Compare the computed hash with the received hash
+        return SecureHash.Equals(computedHash, StringComparison.OrdinalIgnoreCase);
     }
 }
-                   
