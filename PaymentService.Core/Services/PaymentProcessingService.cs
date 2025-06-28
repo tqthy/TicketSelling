@@ -48,14 +48,15 @@ public class PaymentProcessingService : IPaymentProcessingService
             
             await _paymentRepository.AddAsync(payment);
             
-            // Generate payment URL
-            var paymentUrl = await gateway.CreatePaymentUrl(serviceRequest);
+            // Generate payment URL and get transaction ID
+            var (paymentUrl, transactionId) = await gateway.CreatePaymentUrl(serviceRequest);
             
-            // Update payment with the payment URL
-            // await _paymentRepository.UpdateAsync(payment);
+            // Update payment with the transaction ID
+            payment.PrimaryGatewayTransactionId = transactionId;
+            await _paymentRepository.UpdateAsync(payment);
             
-            _logger.LogInformation("Successfully initiated payment {PaymentId} for booking {BookingId}", 
-                payment.Id, payment.BookingId);
+            _logger.LogInformation("Successfully initiated payment {PaymentId} for booking {BookingId} with transaction ID {TransactionId}", 
+                payment.Id, payment.BookingId, transactionId);
                 
             return paymentUrl;
         }

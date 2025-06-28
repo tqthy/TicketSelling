@@ -35,7 +35,7 @@ public abstract class BasePaymentGateway : IPaymentGateway
             throw new PaymentGatewayConfigurationException("Base URL is not configured.", GatewayName);
     }
 
-    public abstract Task<string> CreatePaymentUrl(CreatePaymentRequest serviceRequest);
+    public abstract Task<(string PaymentUrl, string TransactionId)> CreatePaymentUrl(CreatePaymentRequest serviceRequest);
     public abstract Task HandleWebhookResult(HttpContext httpContext);
     public abstract Task<ProcessRefundResponse> ProcessRefund(ProcessRefundResponse serviceRequest);
     

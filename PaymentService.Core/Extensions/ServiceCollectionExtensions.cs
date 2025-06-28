@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
     private static readonly Dictionary<string, Type> GatewayTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         { VnPayGateway.GatewayName, typeof(VnPayGateway) },
+        { "Mock", typeof(MockPaymentGateway) }, // Mock gateway for testing
         // Add new gateways here:
         // { "MomoGateway", typeof(MomoGateway) },
         // { "PayPalGateway", typeof(PayPalGateway) },
