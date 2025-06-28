@@ -188,18 +188,21 @@ public class PaymentsController : ControllerBase
    /// Manually trigger a mock payment webhook for testing
    /// </summary>
    [HttpGet("test/mock-webhook")]
-   // [ApiExplorerSettings(IgnoreApi = true)] // Hide from Swagger in non-development environments
    public async Task<IActionResult> TriggerMockWebhook(
        [FromQuery] string transactionId,
-       [FromQuery] string status = "00") // Default to success
+       [FromQuery] string status = "00")
    {
        if (string.IsNullOrEmpty(transactionId))
        {
            return BadRequest("transactionId is required");
        }
 
-       // Create a mock HTTP context with the query parameters
+       // Create a mock HTTP context
        var httpContext = new DefaultHttpContext();
+    
+       // *** FIX: Set the RequestServices from the current HttpContext ***
+       httpContext.RequestServices = HttpContext.RequestServices;
+
        httpContext.Request.Query = new QueryCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
        {
            ["transactionId"] = transactionId,
@@ -210,10 +213,10 @@ public class PaymentsController : ControllerBase
        {
            // Process the webhook
            await _paymentProcessingService.HandleWebhookResult(httpContext, "Mock");
-           
-           
 
-           return StatusCode(500, "Failed to process mock webhook");
+           // The original code has an issue where it returns 500 even on success.
+           // It is better to return a success message.
+           return Ok("Mock webhook processed successfully.");
        }
        catch (Exception ex)
        {
