@@ -88,20 +88,20 @@ public static class ServiceCollectionExtensions
                 var normalizedGatewayName = gatewayName.Trim().ToLowerInvariant();
                 
                 // Register a factory that resolves the named options
-                services.AddTransient<IPaymentGateway>(provider =>
+                services.AddTransient(gatewayType, provider =>
                 {
                     var optionsMonitor = provider.GetRequiredService<IOptionsMonitor<PaymentGatewayOptions>>();
                     var options = optionsMonitor.Get(gatewayName); // Get the named options
-                    var logger = provider.GetRequiredService<ILoggerFactory>()
-                        .CreateLogger(gatewayType);
                     
-                    
-                    
+                    var loggerType = typeof(ILogger<>).MakeGenericType(gatewayType);
+                    var gatewayLogger = provider.GetRequiredService(loggerType);
+
                     // Create the gateway instance with the resolved options
+                    // The Activator will now find the constructor that takes IOptions<PaymentGatewayOptions> and ILogger<VnPayGateway>
                     var gateway = Activator.CreateInstance(
                         gatewayType,
                         Options.Create(options), // Wrap the options in IOptions
-                        logger) as IPaymentGateway;
+                        gatewayLogger) as IPaymentGateway;
                     
                     if (gateway == null)
                     {
