@@ -1,219 +1,300 @@
+using System;
+using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Configuration;
+using System.Collections.Specialized;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PaymentService.Core.Contracts.Gateways;
-using PaymentService.Core.Services;
+using PaymentService.Core.Contracts.Persistence;
+using PaymentService.Core.Entities;
+using PaymentService.Core.Exceptions;
 using VNPAY.NET;
 using VNPAY.NET.Enums;
 using VNPAY.NET.Models;
-using VNPay.NetCore;
 
 namespace PaymentService.Core.Gateways;
 
-public class VnPayGateway : IPaymentGateway
+public class VnPayGateway : BasePaymentGateway
 {
-    // private static readonly Lazy<VnPayGateway> _instance = new(() => new VnPayGateway());
-    private static IConfiguration _configuration = null!;
-    private static ILogger<PaymentProcessingService> _logger = null!;
-
-    // private VnPayGateway()
-    // {
-    //     // Private constructor to prevent instantiation
-    // }
-    
     private readonly IVnpay _vnpay;
-    public VnPayGateway(IConfiguration configuration, ILogger<PaymentProcessingService> logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        var vnPayConfig = configuration.GetSection("VnPay");
-        string vnp_Returnurl = vnPayConfig["ReturnUrl"] ?? throw new InvalidOperationException("ReturnUrl is missing in configuration.");
-        string vnp_Url = vnPayConfig["BaseUrl"] ?? throw new InvalidOperationException("BaseUrl is missing in configuration.");
-        string vnp_TmnCode = vnPayConfig["TmnCode"] ?? throw new InvalidOperationException("TmnCode is missing in configuration.");
-        string vnp_HashSecret = vnPayConfig["HashSecret"] ?? throw new InvalidOperationException("HashSecret is missing in configuration.");
+    public const string GatewayName = "VnPay";
 
+    public VnPayGateway(
+        IOptions<PaymentGatewayOptions> options,
+        ILogger<VnPayGateway> logger)
+        : base(GatewayName, options, logger)
+    {
+        // Validate required options
+        if (string.IsNullOrWhiteSpace(Options.TmnCode))
+            throw new PaymentGatewayConfigurationException("TmnCode is required for VNPay.", GatewayName);
+            
+        if (string.IsNullOrWhiteSpace(Options.HashSecret))
+            throw new PaymentGatewayConfigurationException("HashSecret is required for VNPay.", GatewayName);
+            
+        if (string.IsNullOrWhiteSpace(Options.ReturnUrl))
+            throw new PaymentGatewayConfigurationException("ReturnUrl is required for VNPay.", GatewayName);
+
+        // Log the options being used (without sensitive data)
+        logger.LogInformation("VnPayGateway initialized with options: {Options}", new {
+            BaseUrl = !string.IsNullOrEmpty(Options.BaseUrl) ? "[SET]" : "[NOT SET]",
+            TmnCode = !string.IsNullOrEmpty(Options.TmnCode) ? "[SET]" : "[NOT SET]",
+            ReturnUrl = !string.IsNullOrEmpty(Options.ReturnUrl) ? "[SET]" : "[NOT SET]",
+            Locale = Options.Locale ?? "[DEFAULT]"
+        });
+        
         _vnpay = new Vnpay();
-        _vnpay.Initialize(vnp_TmnCode, vnp_HashSecret, vnp_Url, vnp_Returnurl);
+        _vnpay.Initialize(
+            Options.TmnCode, 
+            Options.HashSecret, 
+            Options.BaseUrl, 
+            Options.ReturnUrl);
+            
+        Logger.LogInformation("Initialized VNPay gateway with TmnCode: {TmnCode}", Options.TmnCode);
     }
-    // public VnPayGateway(IConfiguration configuration, ILogger<PaymentProcessingService> logger)
-    // {
-    //     _configuration = configuration;
-    //     _logger = logger;
-    //     var vnPayConfig = _configuration.GetSection("VnPay");
-    //     string vnp_Returnurl = vnPayConfig.GetSection("ReturnUrl").Value ?? "facebook.com";
-    //     string vnp_Url = vnPayConfig.GetSection("BaseUrl").Value ?? "facebook.com";
-    //     string vnp_TmnCode = vnPayConfig.GetSection("TmnCode").Value ?? "facebook.com";
-    //     string vnp_HashSecret = vnPayConfig.GetSection("HashSecret").Value ?? "facebook.com";
-    //     _vnpay = new Vnpay();
-    //     _vnpay.Initialize(vnp_TmnCode, vnp_HashSecret, vnp_Url, vnp_Returnurl);
-    // }
-    //
-    // public static VnPayGateway GetInstance(IConfiguration configuration, ILogger<PaymentProcessingService> logger)
-    // {
-    //     _configuration = configuration;
-    //     _logger = logger;
-    //     return _instance.Value;
-    // }
+    
 
-    public Task<string> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
+    public override async Task<string> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
     {
-        if (_vnpay == null)
+        try
         {
-            throw new InvalidOperationException("VNPay is not initialized.");
-        }
-        var request = new PaymentRequest
-        {
-            PaymentId = DateTime.Now.Ticks,
-            Money = (double)serviceRequest.Amount,
-            Description = serviceRequest.OrderInfo,
-            IpAddress = "127.0.0.1",
-            BankCode = BankCode.VNBANK, // Tùy chọn. Mặc định là tất cả phương thức giao dịch
-            CreatedDate = DateTime.Now, // Tùy chọn. Mặc định là thời điểm hiện tại
-            Currency = Currency.VND, // Tùy chọn. Mặc định là VND (Việt Nam đồng)
-            Language = DisplayLanguage.Vietnamese,
-        };
-        
-        var paymentUrl = _vnpay.GetPaymentUrl(request);
+            Logger.LogInformation("Creating payment URL for order: {OrderInfo}", serviceRequest.OrderInfo);
+            
+            ValidatePaymentRequest(serviceRequest);
 
-        _logger.LogInformation("VNPAY URL: {paymentUrl}", paymentUrl);
-        return Task.FromResult(paymentUrl);
-    }
-    // public Task<string> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
-    // {
-    //     var vnPayConfig = _configuration.GetSection("VnPay");
-    //     string vnp_Returnurl = vnPayConfig.GetSection("ReturnUrl").Value ?? "facebook.com";
-    //     string vnp_Url = vnPayConfig.GetSection("BaseUrl").Value ?? "facebook.com";
-    //     string vnp_TmnCode = vnPayConfig.GetSection("TmnCode").Value ?? "facebook.com";
-    //     string vnp_HashSecret = vnPayConfig.GetSection("HashSecret").Value ?? "facebook.com";
-    //     string locale = vnPayConfig.GetSection("Locale").Value ?? "vn";
-    //     
-    //     _logger.LogInformation($"VnPay Configuration: ReturnUrl={vnp_Returnurl}, BaseUrl={vnp_Url}, TmnCode={vnp_TmnCode}, HashSecret={vnp_HashSecret}, Locale={locale}");
-    //     
-    //     if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
-    //     {
-    //         throw new Exception("VNPAY configuration is missing.");
-    //     }
-    //     //Build URL for VNPAY
-    //     VnPayLibrary vnpay = new();
-    //     vnpay.AddRequestData("vnp_Version", "2.1.1");
-    //     vnpay.AddRequestData("vnp_Command", "pay");
-    //     vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-    //     vnpay.AddRequestData("vnp_Amount", (serviceRequest.Amount * 100).ToString());
-    //     vnpay.AddRequestData("vnp_BankCode", "VNBANK");
-    //     vnpay.AddRequestData("vnp_CreateDate", serviceRequest.CreateDate.ToString("yyyyMMddHHmmss"));
-    //     vnpay.AddRequestData("vnp_CurrCode", "VND");
-    //     vnpay.AddRequestData("vnp_IpAddr", serviceRequest.IpAddress);
-    //     if (!string.IsNullOrEmpty(locale))
-    //     {
-    //         vnpay.AddRequestData("vnp_Locale", locale);
-    //     }
-    //     else
-    //     {
-    //         vnpay.AddRequestData("vnp_Locale", "vn");
-    //     }
-    //     vnpay.AddRequestData("vnp_OrderInfo", serviceRequest.OrderInfo);
-    //     vnpay.AddRequestData("vnp_OrderType", serviceRequest.OrderType);
-    //     vnpay.AddRequestData("vnp_ReturnUrl", vnp_Returnurl);
-    //     vnpay.AddRequestData("vnp_TxnRef", serviceRequest.BookingId.ToString());
-    //     //Add Params of 2.1.0 Version
-    //     vnpay.AddRequestData("vnp_ExpireDate", serviceRequest.ExpireDate.ToString("yyyyMMddHHmmss"));
-    //     //Billing
-    //     // vnpay.AddRequestData("vnp_Bill_Mobile", txt_billing_mobile.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Bill_Email", txt_billing_email.Text.Trim());
-    //     // var fullName = txt_billing_fullname.Text.Trim();
-    //     // if (!String.IsNullOrEmpty(fullName))
-    //     // {
-    //     //     var indexof = fullName.IndexOf(' ');
-    //     //     vnpay.AddRequestData("vnp_Bill_FirstName", fullName.Substring(0, indexof));
-    //     //     vnpay.AddRequestData("vnp_Bill_LastName", fullName.Substring(indexof + 1, 
-    //     //     fullName.Length - indexof - 1));
-    //     // }
-    //     // vnpay.AddRequestData("vnp_Bill_Address", txt_inv_addr1.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Bill_City", txt_bill_city.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Bill_Country", txt_bill_country.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Bill_State", "");
-    //     // Invoice
-    //     // vnpay.AddRequestData("vnp_Inv_Phone", txt_inv_mobile.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Inv_Email", txt_inv_email.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Inv_Customer", txt_inv_customer.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Inv_Address", txt_inv_addr1.Text.Trim());
-    //     // vnpay.AddRequestData("vnp_Inv_Company", txt_inv_company.Text);
-    //     // vnpay.AddRequestData("vnp_Inv_Taxcode", txt_inv_taxcode.Text);
-    //     // vnpay.AddRequestData("vnp_Inv_Type", cbo_inv_type.SelectedItem.Value);
-    //
-    //     var paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
-    //         
-    //     _logger.LogInformation("VNPAY URL: {paymentUrl}", paymentUrl);
-    //     
-    //     return Task.FromResult(paymentUrl);
-    // }
-
-    public Task HandleWebhookResult(HttpContext context)
-    {
-        string returnContent = string.Empty;
-        var vnPayConfig = _configuration.GetSection("VnPay");
-        
-            if (context.Request.Query.Count > 0)
+            var request = new PaymentRequest
             {
-                string vnp_HashSecret = vnPayConfig.GetSection("HashSecret").Value ?? "facebook.com";
-                var vnpayData = context.Request.Query;
-                VnPayLibrary vnpay = new VnPayLibrary();
-                var parametersDictionary = new Dictionary<string, string>();
+                PaymentId = DateTime.Now.Ticks,
+                Money = (double)serviceRequest.Amount,
+                Description = serviceRequest.OrderInfo,
+                IpAddress = serviceRequest.IpAddress,
+                BankCode = BankCode.VNBANK,
+                CreatedDate = DateTime.Now,
+                Currency = Currency.VND,
+                Language = DisplayLanguage.Vietnamese,
+            };
+            
+            var paymentUrl = _vnpay.GetPaymentUrl(request);
 
-                foreach (var s in vnpayData)
-                {
-                    var key = s.Key;
-                    var value = s.Value;
-                    if (key.StartsWith("vnp_"))
-                    {
-                        vnpay.AddResponseData(key, value.ToString());
-                    }
-                    parametersDictionary.Add(s.Key, s.Value.FirstOrDefault() ?? string.Empty);
+            if (string.IsNullOrEmpty(paymentUrl))
+                throw new PaymentGatewayException("Failed to generate payment URL.", "PAYMENT_URL_GENERATION_FAILED", GatewayName);
 
-                }
-                //Lay danh sach tham so tra ve tu VNPAY
-                //vnp_TxnRef: Ma don hang merchant gui VNPAY tai command=pay    
-                //vnp_TransactionNo: Ma GD tai he thong VNPAY
-                //vnp_ResponseCode:Response code from VNPAY: 00: Thanh cong, Khac 00: Xem tai lieu
-                //vnp_SecureHash: HmacSHA512 cua du lieu tra ve
+            Logger.LogInformation("Successfully created VNPay URL for order: {OrderInfo}", serviceRequest.OrderInfo);
+            return paymentUrl;
+        }
+        catch (PaymentGatewayException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating VNPay URL for order: {OrderInfo}", serviceRequest.OrderInfo);
+            throw new PaymentGatewayException(
+                "An error occurred while creating payment URL. Please try again later.",
+                "PAYMENT_URL_CREATION_ERROR",
+                GatewayName,
+                true, // Mark as transient
+                ex);
+        }
+    }
 
-                long orderId = Convert.ToInt64(vnpay.GetResponseData("vnp_TxnRef"));
-                long vnp_Amount = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount"))/100;
-                long vnpayTranId = Convert.ToInt64(vnpay.GetResponseData("vnp_TransactionNo"));
-                string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
-                string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
-                String vnp_SecureHash = parametersDictionary["vnp_SecureHash"];
-                bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
-                if (checkSignature)
-                {
-                    if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00")
-                    {
-                        //Thanh toan thanh cong
-                        _logger.LogInformation("Thanh toan thanh cong, OrderId={0}, VNPAY TranId={1}", orderId,
-                            vnpayTranId);
-                        
-                    } else
-                    {
-                        _logger.LogInformation("Thanh toan loi, OrderId={0}, VNPAY TranId={1},ResponseCode={2}",
-                            orderId, vnpayTranId, vnp_ResponseCode);
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation("Invalid signature, InputData={0}", context.Request.GetDisplayUrl());
-                    returnContent = "{\"RspCode\":\"97\",\"Message\":\"Invalid signature\"}";
-                }
+    public override async Task HandleWebhookResult(HttpContext httpContext)
+    {
+        if (httpContext == null)
+            throw new ArgumentNullException(nameof(httpContext));
+
+        Logger.LogInformation("Processing VNPay webhook callback");
+        
+        try
+        {
+            // Extract and validate VNPay response parameters
+            var vnpResponse = new VnPayResponse(httpContext.Request.Query);
+            
+            // Verify the response signature
+            if (!vnpResponse.IsValid(Options.HashSecret!))
+            {
+                Logger.LogWarning("Invalid VNPay callback signature");
+                throw new PaymentGatewayValidationException("Invalid payment callback signature", GatewayName, "INVALID_SIGNATURE");
+            }
+
+            // Get the payment repository from the service provider
+            var serviceProvider = httpContext.RequestServices;
+            var paymentRepository = serviceProvider.GetRequiredService<IPaymentRepository>();
+            
+            // Find the payment by the transaction reference (vnp_TxnRef)
+            // Note: You might need to adjust this based on how you're storing the transaction reference
+            var transactionRef = vnpResponse.OrderId;
+            if (string.IsNullOrEmpty(transactionRef))
+            {
+                Logger.LogError("VNPay response is missing transaction reference (vnp_TxnRef)");
+                throw new PaymentGatewayValidationException("Missing transaction reference", GatewayName, "MISSING_TRANSACTION_REF");
+            }
+
+            // In a real implementation, you would need to retrieve the payment by its reference
+            // This is a simplified example - you'll need to implement the actual lookup logic
+            var payment = await GetPaymentByReferenceAsync(transactionRef, paymentRepository);
+            
+            if (payment == null)
+            {
+                Logger.LogError("Payment not found for transaction reference: {TransactionRef}", transactionRef);
+                throw new PaymentGatewayValidationException("Payment not found", GatewayName, "PAYMENT_NOT_FOUND");
+            }
+
+            
+
+            // Process the payment status
+            if (vnpResponse.ResponseCode == "00")
+            {
+                // Payment successful
+                payment.MarkAsSucceeded(vnpResponse.TransactionId, GatewayName);
+                Logger.LogInformation("VNPay payment successful for transaction: {TransactionId}", vnpResponse.TransactionId);
             }
             else
             {
-                returnContent = "{\"RspCode\":\"99\",\"Message\":\"Input data required\"}";
+                // Payment failed
+                var errorMessage = $"VNPay payment failed. Response code: {vnpResponse.ResponseCode}, Message: {vnpResponse.Message}";
+                payment.MarkAsFailed(errorMessage, vnpResponse.TransactionId, GatewayName);
+                Logger.LogWarning("VNPay payment failed for transaction: {TransactionId}. {ErrorMessage}", 
+                    vnpResponse.TransactionId, errorMessage);
             }
 
-            return Task.CompletedTask;
+            
+            // Create a new payment attempt
+            var attempt = new PaymentAttempt(
+                payment.Id,
+                GatewayName,
+                true,
+                vnpResponse.TransactionId,
+                vnpResponse.ResponseCode,
+                vnpResponse.Message);
+            // Add the attempt and update the payment
+            payment.AddAttempt(attempt);
+            await paymentRepository.UpdateAsync(payment);
+            
+            // Return a success response to VNPay
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "00",
+                Message = "Confirm success"
+            });
+        }
+        catch (PaymentGatewayException ex)
+        {
+            Logger.LogError(ex, "Error processing VNPay webhook: {Message}", ex.Message);
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "99",
+                Message = $"Error: {ex.Message}"
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error processing VNPay webhook");
+            await httpContext.Response.WriteAsJsonAsync(new 
+            {
+                RspCode = "99",
+                Message = "Internal server error"
+            });
+        }
+    }
+    
+    private async Task<Payment?> GetPaymentByReferenceAsync(string transactionRef, IPaymentRepository paymentRepository)
+    {
+        if (string.IsNullOrWhiteSpace(transactionRef))
+        {
+            Logger.LogWarning("Transaction reference is null or empty");
+            return null;
+        }
+
+        try
+        {
+            // Use the repository to find the payment by transaction reference
+            var payment = await paymentRepository.GetByTransactionReferenceAsync(transactionRef);
+            
+            if (payment == null)
+            {
+                Logger.LogWarning("Payment not found for transaction reference: {TransactionRef}", transactionRef);
+            }
+            
+            return payment;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error retrieving payment for transaction reference: {TransactionRef}", transactionRef);
+            throw new PaymentGatewayException(
+                "An error occurred while retrieving payment information",
+                "PAYMENT_RETRIEVAL_ERROR",
+                GatewayName,
+                true, // Mark as transient
+                ex);
+        }
     }
 
-    public Task<ProcessRefundResponse> ProcessRefund(ProcessRefundResponse serviceRequest)
+    public override Task<ProcessRefundResponse> ProcessRefund(ProcessRefundResponse serviceRequest)
     {
-        throw new NotImplementedException();
+        // TODO: Implement refund functionality
+        throw new System.NotImplementedException("Refund functionality is not implemented yet.");
+    }
+}
+
+// Helper class to parse and validate VNPay response
+public class VnPayResponse
+{
+    private readonly IQueryCollection _query;
+
+    public string? TransactionId => _query["vnp_TransactionNo"];
+    public string? TransactionStatus => _query["vnp_TransactionStatus"];
+    public string? ResponseCode => _query["vnp_ResponseCode"];
+    public string? OrderId => _query["vnp_TxnRef"];
+
+    public decimal Amount => !string.IsNullOrEmpty(_query["vnp_Amount"])
+        ? decimal.Parse(_query["vnp_Amount"]) / 100
+        : 0;
+
+    public string? BankCode => _query["vnp_BankCode"];
+    public string? Message => _query["vnp_Message"];
+    public string? SecureHash => _query["vnp_SecureHash"];
+    public string? SecureHashType => _query["vnp_SecureHashType"];
+    public string? TxnResponseCode => _query["vnp_ResponseCode"];
+    public string? TxnMessage => _query["vnp_Message"];
+
+    public VnPayResponse(IQueryCollection query)
+    {
+        _query = query ?? throw new ArgumentNullException(nameof(query));
+    }
+
+    public bool IsValid(string hashSecret)
+    {
+        if (string.IsNullOrEmpty(hashSecret))
+            throw new ArgumentException("Hash secret cannot be null or empty", nameof(hashSecret));
+
+        if (string.IsNullOrEmpty(SecureHash))
+            return false;
+
+        // Get all query parameters except vnp_SecureHash and vnp_SecureHashType
+        var queryParams = _query
+            .Where(kv => !string.IsNullOrEmpty(kv.Value) && 
+                       !kv.Key.Equals("vnp_SecureHash", StringComparison.OrdinalIgnoreCase) &&
+                       !kv.Key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+        // Create the input string for hashing
+        var signData = string.Join("&", queryParams
+            .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+
+        // Compute the HMAC-SHA512 hash
+        using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(hashSecret));
+        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(signData));
+        var computedHash = BitConverter.ToString(hashBytes)
+            .Replace("-", "")
+            .ToLower();
+
+        // Compare the computed hash with the received hash
+        return SecureHash.Equals(computedHash, StringComparison.OrdinalIgnoreCase);
     }
 }

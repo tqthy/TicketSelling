@@ -110,25 +110,27 @@ public class PaymentsController : ControllerBase
    }
    
    [HttpGet("vnpay")]
-   public Task<IActionResult> GetVnPayUrl([FromQuery] GetVnPayUrlDto request)
+   public async Task<IActionResult> GetVnPayUrl([FromQuery] GetVnPayUrlDto request)
    {
       try
       {
          if (request == null)
          {
-            return Task.FromResult<IActionResult>(BadRequest("Invalid request data."));
+            return BadRequest("Invalid request data.");
          }
 
          CreatePaymentRequest createPaymentRequest = _mapper.Map<CreatePaymentRequest>(request);
+         createPaymentRequest.PaymentGateway = "VnPay";
+         _logger.LogDebug("Creating VNPay payment request: {@CreatePaymentRequest}", createPaymentRequest);
          
-         var url = _paymentProcessingService.InitiatePaymentAsync(createPaymentRequest).Result;
+         var url = await _paymentProcessingService.InitiatePaymentAsync(createPaymentRequest);
 
-         return Task.FromResult<IActionResult>(Ok(new { PaymentUrl = url }));
+         return Ok(new { PaymentUrl = url });
       }
       catch (Exception ex)
       {
          _logger.LogError(ex, "Error generating VNPay URL.");
-         return Task.FromResult<IActionResult>(StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred while generating the payment URL."));
+         return StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred while generating the payment URL.");
       }
    }
    

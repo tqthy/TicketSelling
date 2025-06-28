@@ -9,6 +9,7 @@ using PaymentService.Core.Consumers;
 using PaymentService.Core.Contracts;
 using PaymentService.Core.Contracts.Gateways;
 using PaymentService.Core.Contracts.Persistence;
+using PaymentService.Core.Extensions;
 using PaymentService.Core.Gateways;
 using PaymentService.Core.Persistence;
 using PaymentService.Core.Persistence.Repositories;
@@ -40,7 +41,6 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<InitiatePaymentRequestConsumer>(); // Register your consumer
-
     // If PaymentService also publishes events (e.g., PaymentSucceeded, PaymentFailed)
     // and you want to use the EF Outbox for that:
     // x.AddEntityFrameworkOutbox<PaymentDbContext>(o =>
@@ -56,7 +56,7 @@ builder.Services.AddMassTransit(x =>
         var host = rabbitMqConfig.GetValue<string>("Host", "rabbitmq"); // Default to "rabbitmq" for Docker Compose
         var username = rabbitMqConfig.GetValue<string>("Username", "guest");
         var password = rabbitMqConfig.GetValue<string>("Password", "guest");
-
+        
         cfg.Host(host, "/", h =>
         {
             h.Username(username);
@@ -89,9 +89,12 @@ builder.Services.AddHttpClient<IBookingServiceClient, BookingServiceClient>(clie
     client.BaseAddress = new Uri(builder.Configuration["BookingService:BaseUrl"]);
 });
 
+// Register payment services
 builder.Services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
-builder.Services.AddSingleton<IPaymentGateway, VnPayGateway>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+
+// Register payment gateways
+builder.Services.AddPaymentGateways(builder.Configuration);
 
 
 builder.Services.AddAutoMapper(typeof(PaymentMappingProfile));
