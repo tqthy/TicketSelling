@@ -31,9 +31,6 @@ public abstract class BasePaymentGateway : IPaymentGateway
 
     protected virtual void ValidateConfiguration()
     {
-        if (string.IsNullOrWhiteSpace(Options.ApiKey))
-            throw new PaymentGatewayConfigurationException("API key is not configured.", GatewayName);
-            
         if (string.IsNullOrWhiteSpace(Options.BaseUrl))
             throw new PaymentGatewayConfigurationException("Base URL is not configured.", GatewayName);
     }
@@ -60,7 +57,7 @@ public abstract class BasePaymentGateway : IPaymentGateway
 
 public class PaymentGatewayOptions
 {
-    public string ApiKey { get; set; }
+    // public string ApiKey { get; set; }
     public string BaseUrl { get; set; }
     public string ReturnUrl { get; set; }
     public string HashSecret { get; set; }

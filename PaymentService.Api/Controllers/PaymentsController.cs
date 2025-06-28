@@ -120,6 +120,8 @@ public class PaymentsController : ControllerBase
          }
 
          CreatePaymentRequest createPaymentRequest = _mapper.Map<CreatePaymentRequest>(request);
+         createPaymentRequest.PaymentGateway = "VnPay";
+         _logger.LogDebug("Creating VNPay payment request: {@CreatePaymentRequest}", createPaymentRequest);
          
          var url = _paymentProcessingService.InitiatePaymentAsync(createPaymentRequest).Result;
 

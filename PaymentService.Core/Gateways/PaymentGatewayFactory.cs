@@ -34,7 +34,12 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
         _gatewayTypes = gatewayTypes?.ToDictionary(kv => kv.Key, kv => kv.Value) 
             ?? throw new ArgumentNullException(nameof(gatewayTypes));
     }
-
+    
+    /// <summary>
+    /// Creates a new instance of the specified payment gateway.
+    /// </summary>
+    /// <param name="gatewayName">The name of the payment gateway.</param>
+    /// <returns>A new instance of the specified payment gateway.</returns>
     public IPaymentGateway CreateGateway(string gatewayName)
     {
         if (string.IsNullOrWhiteSpace(gatewayName))
@@ -52,6 +57,8 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
 
             try
             {
+                _logger.LogDebug("Creating payment gateway instance for {GatewayName} (Type: {GatewayType})", 
+                    gatewayName, gatewayType.Name);
                 var gateway = (IPaymentGateway)_serviceProvider.GetRequiredService(gatewayType);
                 _gatewayInstances[normalizedGatewayName] = gateway;
                 _logger.LogInformation("Created payment gateway instance for {GatewayName}", gatewayName);
@@ -78,6 +85,11 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
         throw new PaymentGatewayNotSupportedException(gatewayName);
     }
 
+    /// <summary>
+    /// Gets the payment gateway instance with the specified name.
+    /// </summary>
+    /// <param name="gatewayName">The name of the payment gateway.</param>
+    /// <returns>The payment gateway instance if found; otherwise, null.</returns>
     public bool TryGetGateway(string gatewayName, out IPaymentGateway gateway)
     {
         if (string.IsNullOrWhiteSpace(gatewayName))
@@ -85,7 +97,8 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
             gateway = null;
             return false;
         }
-
+        _logger.LogInformation("Trying to get payment gateway instance for {GatewayName}", gatewayName);
+        
         var normalizedGatewayName = gatewayName.Trim().ToLowerInvariant();
 
         lock (_lock)

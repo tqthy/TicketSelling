@@ -41,7 +41,6 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<InitiatePaymentRequestConsumer>(); // Register your consumer
-
     // If PaymentService also publishes events (e.g., PaymentSucceeded, PaymentFailed)
     // and you want to use the EF Outbox for that:
     // x.AddEntityFrameworkOutbox<PaymentDbContext>(o =>
@@ -57,7 +56,7 @@ builder.Services.AddMassTransit(x =>
         var host = rabbitMqConfig.GetValue<string>("Host", "rabbitmq"); // Default to "rabbitmq" for Docker Compose
         var username = rabbitMqConfig.GetValue<string>("Username", "guest");
         var password = rabbitMqConfig.GetValue<string>("Password", "guest");
-
+        
         cfg.Host(host, "/", h =>
         {
             h.Username(username);

@@ -29,6 +29,24 @@ public class VnPayGateway : BasePaymentGateway
         ILogger<VnPayGateway> logger)
         : base(GatewayName, options, logger)
     {
+        // Validate required options
+        if (string.IsNullOrWhiteSpace(Options.TmnCode))
+            throw new PaymentGatewayConfigurationException("TmnCode is required for VNPay.", GatewayName);
+            
+        if (string.IsNullOrWhiteSpace(Options.HashSecret))
+            throw new PaymentGatewayConfigurationException("HashSecret is required for VNPay.", GatewayName);
+            
+        if (string.IsNullOrWhiteSpace(Options.ReturnUrl))
+            throw new PaymentGatewayConfigurationException("ReturnUrl is required for VNPay.", GatewayName);
+
+        // Log the options being used (without sensitive data)
+        logger.LogInformation("VnPayGateway initialized with options: {Options}", new {
+            BaseUrl = !string.IsNullOrEmpty(Options.BaseUrl) ? "[SET]" : "[NOT SET]",
+            TmnCode = !string.IsNullOrEmpty(Options.TmnCode) ? "[SET]" : "[NOT SET]",
+            ReturnUrl = !string.IsNullOrEmpty(Options.ReturnUrl) ? "[SET]" : "[NOT SET]",
+            Locale = Options.Locale ?? "[DEFAULT]"
+        });
+
         if (string.IsNullOrWhiteSpace(Options.TmnCode))
             throw new PaymentGatewayConfigurationException("TmnCode is required for VNPay.", GatewayName);
             
