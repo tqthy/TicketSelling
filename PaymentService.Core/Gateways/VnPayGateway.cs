@@ -165,7 +165,7 @@ public class VnPayGateway : BasePaymentGateway
             var attempt = new PaymentAttempt(
                 payment.Id,
                 GatewayName,
-                true,
+                payment.Status == PaymentStatus.Succeeded,
                 vnpResponse.TransactionId,
                 vnpResponse.ResponseCode,
                 vnpResponse.Message);

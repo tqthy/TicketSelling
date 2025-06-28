@@ -4,6 +4,7 @@ using Common.Messages;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using PaymentService.Api.DTOs;
+using PaymentService.Api.Models;
 using PaymentService.Core.Contracts;
 using PaymentService.Core.Contracts.Gateways;
 using PaymentService.Core.Services;
@@ -109,6 +110,8 @@ public class PaymentsController : ControllerBase
       }
    }
    
+   
+   
    [HttpGet("vnpay")]
    public async Task<IActionResult> GetVnPayUrl([FromQuery] GetVnPayUrlDto request)
    {
@@ -132,6 +135,91 @@ public class PaymentsController : ControllerBase
          _logger.LogError(ex, "Error generating VNPay URL.");
          return StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred while generating the payment URL.");
       }
+   }
+   
+   
+   
+   /// <summary>
+   /// Create a mock payment URL for testing
+   /// </summary>
+   [HttpGet("mock")]
+   // [ApiExplorerSettings(IgnoreApi = true)] // Hide from Swagger in non-development environments
+   public async Task<IActionResult> CreateMockPaymentUrl([FromQuery] CreateMockPaymentRequest request)
+   {
+       try
+       {
+           if (request == null)
+           {
+               return BadRequest("Invalid request data.");
+           }
+
+           var createPaymentRequest = new CreatePaymentRequest
+           {
+               BookingId = request.BookingId,
+               UserId = request.UserId,
+               Amount = request.Amount,
+               OrderInfo = request.OrderInfo,
+               IpAddress = Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+               Currency = request.Currency ?? "VND",
+               PaymentGateway = "Mock",
+               CreateDate = DateTime.UtcNow,
+               ExpireDate = DateTime.UtcNow.AddMinutes(15)
+           };
+
+           _logger.LogInformation("Creating mock payment URL for order: {OrderInfo}", request.OrderInfo);
+           
+           var paymentUrl = await _paymentProcessingService.InitiatePaymentAsync(createPaymentRequest);
+
+           _logger.LogInformation("Successfully created mock payment URL for order: {OrderInfo}", request.OrderInfo);
+           
+           return Ok(new 
+           { 
+               PaymentUrl = paymentUrl,
+           });
+       }
+       catch (Exception ex)
+       {
+           _logger.LogError(ex, "Error creating mock payment URL for order: {OrderInfo}", request?.OrderInfo);
+           return StatusCode(500, new { Error = "An error occurred while creating the mock payment URL." });
+       }
+   }
+
+   /// <summary>
+   /// Manually trigger a mock payment webhook for testing
+   /// </summary>
+   [HttpGet("test/mock-webhook")]
+   // [ApiExplorerSettings(IgnoreApi = true)] // Hide from Swagger in non-development environments
+   public async Task<IActionResult> TriggerMockWebhook(
+       [FromQuery] string transactionId,
+       [FromQuery] string status = "00") // Default to success
+   {
+       if (string.IsNullOrEmpty(transactionId))
+       {
+           return BadRequest("transactionId is required");
+       }
+
+       // Create a mock HTTP context with the query parameters
+       var httpContext = new DefaultHttpContext();
+       httpContext.Request.Query = new QueryCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+       {
+           ["transactionId"] = transactionId,
+           ["status"] = status
+       });
+
+       try
+       {
+           // Process the webhook
+           await _paymentProcessingService.HandleWebhookResult(httpContext, "Mock");
+           
+           
+
+           return StatusCode(500, "Failed to process mock webhook");
+       }
+       catch (Exception ex)
+       {
+           _logger.LogError(ex, "Error processing mock webhook");
+           return StatusCode(500, $"Error processing mock webhook: {ex.Message}");
+       }
    }
    
 }
