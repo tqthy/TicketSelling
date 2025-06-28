@@ -9,16 +9,6 @@ public class PaymentRepository(PaymentDbContext dbContext) : IPaymentRepository
     // private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly PaymentDbContext _dbContext = dbContext;
 
-    public void Add(Payment payment)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Update(Payment payment)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task AddAsync(Payment payment)
     {
         if (payment == null)

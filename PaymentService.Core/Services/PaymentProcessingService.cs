@@ -52,7 +52,7 @@ public class PaymentProcessingService : IPaymentProcessingService
             var paymentUrl = await gateway.CreatePaymentUrl(serviceRequest);
             
             // Update payment with the payment URL
-            await _paymentRepository.UpdateAsync(payment);
+            // await _paymentRepository.UpdateAsync(payment);
             
             _logger.LogInformation("Successfully initiated payment {PaymentId} for booking {BookingId}", 
                 payment.Id, payment.BookingId);

@@ -46,16 +46,7 @@ public class VnPayGateway : BasePaymentGateway
             ReturnUrl = !string.IsNullOrEmpty(Options.ReturnUrl) ? "[SET]" : "[NOT SET]",
             Locale = Options.Locale ?? "[DEFAULT]"
         });
-
-        if (string.IsNullOrWhiteSpace(Options.TmnCode))
-            throw new PaymentGatewayConfigurationException("TmnCode is required for VNPay.", GatewayName);
-            
-        if (string.IsNullOrWhiteSpace(Options.HashSecret))
-            throw new PaymentGatewayConfigurationException("HashSecret is required for VNPay.", GatewayName);
-            
-        if (string.IsNullOrWhiteSpace(Options.ReturnUrl))
-            throw new PaymentGatewayConfigurationException("ReturnUrl is required for VNPay.", GatewayName);
-
+        
         _vnpay = new Vnpay();
         _vnpay.Initialize(
             Options.TmnCode, 
