@@ -1,6 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Common.Messages;
+using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,8 +11,7 @@ using PaymentService.Core.Contracts.Gateways;
 using PaymentService.Core.Contracts.Persistence;
 using PaymentService.Core.Entities;
 using PaymentService.Core.Exceptions;
-using PaymentService.Core.Models;
-using VNPAY.NET.Models;
+
 
 namespace PaymentService.Core.Gateways
 {
@@ -18,12 +19,14 @@ namespace PaymentService.Core.Gateways
     {
         private static readonly Random _random = new Random();
         private const string MockTransactionIdPrefix = "MOCK";
-
+        private readonly ISendEndpointProvider _sendEndpointProvider;
         public MockPaymentGateway(
             IOptions<PaymentGatewayOptions> options,
-            ILogger<MockPaymentGateway> logger) 
+            ILogger<MockPaymentGateway> logger,
+            ISendEndpointProvider sendEndpointProvider) 
             : base("Mock", options, logger)
         {
+            _sendEndpointProvider = sendEndpointProvider;
         }
 
         public override async Task<(string PaymentUrl, string TransactionId)> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
@@ -68,8 +71,16 @@ namespace PaymentService.Core.Gateways
                 ? parsedStatus
                 : PaymentStatus.Failed;
 
+            var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:booking-payment-results"));
+
+            
             if (status == PaymentStatus.Succeeded)
             {
+                await sendEndpoint.Send(new PaymentSucceeded(
+                    payment.BookingId,
+                    payment.Id,
+                    DateTime.UtcNow
+                ));
                 // Payment successful
                 payment.MarkAsSucceeded(transactionRef, GatewayName);
                 Logger.LogInformation("MOCK payment successful for transaction: {TransactionId}", transactionRef);
@@ -77,6 +88,12 @@ namespace PaymentService.Core.Gateways
             else
             {
                 // Payment failed
+                await sendEndpoint.Send(new PaymentFailed(
+                    payment.BookingId,
+                    payment.Id,
+                    payment.FailureReason ?? "An unknown error occurred",
+                    DateTime.UtcNow
+                ));
                 var errorMessage = $"Mock payment failed.";
                 payment.MarkAsFailed(errorMessage, transactionRef, GatewayName);
                 Logger.LogWarning("Mock payment failed for transaction: {TransactionId}. {ErrorMessage}", 

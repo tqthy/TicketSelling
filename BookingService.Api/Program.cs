@@ -1,3 +1,4 @@
+using BookingService.Api.Auth;
 using BookingService.Api.Middleware;
 using BookingService.Application.Contracts.Infrastructure;
 using BookingService.Application.Features.Bookings.Commands;
@@ -7,6 +8,7 @@ using BookingService.Infrastructure.Data;
 using BookingService.Infrastructure.Repositories;
 using Common.Messages;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +19,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication("GatewayHeaders")
+    .AddScheme<AuthenticationSchemeOptions, GatewayHeadersAuthenticationHandler>("GatewayHeaders", options => { });
+
 builder.Services.AddAuthorization();
 
 var connectionString = builder.Configuration.GetConnectionString("BookingDb");
@@ -52,6 +56,8 @@ builder.Services.AddMassTransit(x =>
     //     o.UseBusOutbox();
     // });
     x.AddConsumer<EventApprovedConsumer>();
+    x.AddConsumer<PaymentSucceededIntegrationEventHandler>();
+    x.AddConsumer<PaymentFailedIntegrationEventHandler>();
     
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -84,7 +90,12 @@ builder.Services.AddMassTransit(x =>
             e.UseInMemoryOutbox(context); 
         });
         
-        cfg.Message<InitiatePaymentRequested>(m => m.SetEntityName("payment-initiation-requests")); // Explicit exchange name
+        cfg.ReceiveEndpoint("booking-payment-results", e =>
+        {
+            // Bind the consumers to this endpoint
+            e.ConfigureConsumer<PaymentSucceededIntegrationEventHandler>(context);
+            e.ConfigureConsumer<PaymentFailedIntegrationEventHandler>(context);
+        });
     });
 });
 

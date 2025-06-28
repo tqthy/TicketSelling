@@ -34,7 +34,7 @@ public class PaymentProcessingService : IPaymentProcessingService
         try
         {
             _logger.LogInformation("Initiating payment for booking {BookingId}", serviceRequest.BookingId);
-            
+            // TODO: Verify booking exists and the payment request is valid
             // Get the appropriate payment gateway
             var gateway = _gatewayFactory.GetGateway(serviceRequest.PaymentGateway);
             
