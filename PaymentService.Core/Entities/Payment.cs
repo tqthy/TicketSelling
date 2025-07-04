@@ -17,7 +17,7 @@ public class Payment : BaseEntity<Guid>, IAggregateRoot
 
     // This would be the *final* successful transaction ID, or the latest significant one.
     // Individual attempt transaction IDs are in PaymentAttempt.
-    public string? PrimaryGatewayTransactionId { get; private set; }
+    public string? PrimaryGatewayTransactionId { get; set; }
 
     public string? FailureReason { get; private set; }
     public DateTime? LastSucceededAt { get; private set; }

@@ -63,21 +63,8 @@ builder.Services.AddMassTransit(x =>
             h.Password(password);
         });
 
-        // Configure the receive endpoint for the InitiatePaymentRequested messages
-        // The queue name should be distinct for this consumer.
-        // MassTransit will bind it to the exchange named "payment-initiation-requests" (or the default for the message type)
-        cfg.ReceiveEndpoint("payment-service-initiate-request-queue", e => // Unique queue name for this consumer
-        {
-            e.ConfigureConsumer<InitiatePaymentRequestConsumer>(context);
-
-            // Optional: Configure retries, dead-letter, etc. for this endpoint
-            e.UseMessageRetry(r => r.Interval(5, TimeSpan.FromSeconds(5)));
-            // e.UseInMemoryOutbox(context); // If not using EF outbox for consumers but want consumer outbox
-        });
-
+        
         // Configure message types published by PaymentService (if any)
-        cfg.Message<PaymentSucceeded>(m => m.SetEntityName("payment-succeeded-topic"));
-        cfg.Publish<PaymentSucceeded>(p => p.ExchangeType = "fanout");
         cfg.Message<EmailNotificationRequested>(m => m.SetEntityName("email-notifications-exchange")); //
         cfg.Publish<EmailNotificationRequested>(p => p.ExchangeType = "fanout");
         // ... other published messages

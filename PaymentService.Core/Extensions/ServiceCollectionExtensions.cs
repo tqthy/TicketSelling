@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensions
     private static readonly Dictionary<string, Type> GatewayTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         { VnPayGateway.GatewayName, typeof(VnPayGateway) },
+        { "Mock", typeof(MockPaymentGateway) }, // Mock gateway for testing
         // Add new gateways here:
         // { "MomoGateway", typeof(MomoGateway) },
         // { "PayPalGateway", typeof(PayPalGateway) },
@@ -96,8 +98,19 @@ public static class ServiceCollectionExtensions
                     var loggerType = typeof(ILogger<>).MakeGenericType(gatewayType);
                     var gatewayLogger = provider.GetRequiredService(loggerType);
 
-                    // Create the gateway instance with the resolved options
-                    // The Activator will now find the constructor that takes IOptions<PaymentGatewayOptions> and ILogger<VnPayGateway>
+                    // Special handling for MockPaymentGateway which requires ISendEndpointProvider
+                    if (gatewayType == typeof(MockPaymentGateway))
+                    {
+                        // Create a scope to resolve scoped services
+                        using var scope = provider.CreateScope();
+                        var sendEndpointProvider = scope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
+                        return new MockPaymentGateway(
+                            Options.Create(options),
+                            (ILogger<MockPaymentGateway>)gatewayLogger,
+                            sendEndpointProvider);
+                    }
+                    
+                    // For other gateways, use the default constructor
                     var gateway = Activator.CreateInstance(
                         gatewayType,
                         Options.Create(options), // Wrap the options in IOptions

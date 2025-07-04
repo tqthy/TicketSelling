@@ -13,5 +13,10 @@ public class CreatePaymentRequest
     public string Currency { get; set; }
     public DateTime CreateDate { get; set; }
     public DateTime ExpireDate { get; set; }
+    
+    /// <summary>
+    /// The transaction ID provided by the payment gateway
+    /// </summary>
+    public string? GatewayTransactionId { get; set; }
 }
     

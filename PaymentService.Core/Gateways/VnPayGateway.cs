@@ -58,7 +58,7 @@ public class VnPayGateway : BasePaymentGateway
     }
     
 
-    public override async Task<string> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
+    public override async Task<(string PaymentUrl, string TransactionId)> CreatePaymentUrl(CreatePaymentRequest serviceRequest)
     {
         try
         {
@@ -84,7 +84,7 @@ public class VnPayGateway : BasePaymentGateway
                 throw new PaymentGatewayException("Failed to generate payment URL.", "PAYMENT_URL_GENERATION_FAILED", GatewayName);
 
             Logger.LogInformation("Successfully created VNPay URL for order: {OrderInfo}", serviceRequest.OrderInfo);
-            return paymentUrl;
+            return (paymentUrl, request.PaymentId.ToString());
         }
         catch (PaymentGatewayException)
         {
@@ -127,15 +127,13 @@ public class VnPayGateway : BasePaymentGateway
             
             // Find the payment by the transaction reference (vnp_TxnRef)
             // Note: You might need to adjust this based on how you're storing the transaction reference
-            var transactionRef = vnpResponse.OrderId;
+            var transactionRef = vnpResponse.TransactionId;
             if (string.IsNullOrEmpty(transactionRef))
             {
                 Logger.LogError("VNPay response is missing transaction reference (vnp_TxnRef)");
                 throw new PaymentGatewayValidationException("Missing transaction reference", GatewayName, "MISSING_TRANSACTION_REF");
             }
-
-            // In a real implementation, you would need to retrieve the payment by its reference
-            // This is a simplified example - you'll need to implement the actual lookup logic
+            
             var payment = await GetPaymentByReferenceAsync(transactionRef, paymentRepository);
             
             if (payment == null)
@@ -167,7 +165,7 @@ public class VnPayGateway : BasePaymentGateway
             var attempt = new PaymentAttempt(
                 payment.Id,
                 GatewayName,
-                true,
+                payment.Status == PaymentStatus.Succeeded,
                 vnpResponse.TransactionId,
                 vnpResponse.ResponseCode,
                 vnpResponse.Message);
