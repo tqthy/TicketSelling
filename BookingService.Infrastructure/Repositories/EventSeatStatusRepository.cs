@@ -57,6 +57,8 @@ namespace BookingService.Infrastructure.Repositories
                 // Use LINQ with EF Core for better readability and maintainability
                 return await _context.EventSeatStatuses
                     .Where(ess => ess.EventId == eventId && seatIds.Contains(ess.SeatId))
+                    .OrderBy(ess => ess.SeatId)
+                    .TagWith("FOR UPDATE")
                     .ToListAsync();
             }
             catch (Exception ex)
